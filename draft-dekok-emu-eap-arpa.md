@@ -1,7 +1,7 @@
 ---
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-dekok-emu-eap-arpa-00
+docname: draft-dekok-emu-eap-arpa-01
 updates: 9140
 
 stand_alone: true
@@ -37,8 +37,6 @@ informative:
   RFC2865:
   RFC7170:
   RFC8952:
-  RFC9191:
-  I-D.friel-tls-eap-dpp:
 
 venue:
   group: EMU
@@ -296,10 +294,45 @@ REFERENCE
 
 > THIS-DOCUMENT
 
+### Domain Name Reservation Considerations
+
+This section answers the questions which are required by Section 5 of {{?RFC6761}}.  At a high level, these new domain names are used in certain situations in EAP.  The domain names are never seen by users, and they do not appear in any networking protocol other than EAP.
+
+1. Users:
+
+> User are not expected to recognise these names as special or use them differently from other domain names.  The use of these names in EAP is invisible to end users.
+
+2. Application Software:
+
+> EAP servers and clients are expected to make their software recognize these names as special and treat them differently.  This document discusses that behavor.
+>
+> EAP supplicants should recognize these names as special, and should refuse to allow users to enter them in any interface.
+
+3. Name Resolution APIs and Libraries:
+
+> Writers of these APIs and libraries are not expected to recognize these names or treat them differently.
+
+4. Caching DNS Servers:
+
+> Writers of caching DNS servers are not expected to recognize these names or treat them differently.
+
+5. Authoritative DNS Servers:
+
+> Writers of authoritative DNS servers are not expected to recognize these names or treat them differently.
+
+6.  DNS Server Operators:
+
+> These domain names have no impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.
+>
+> If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
+
+7. DNS Registries/Registrars:
+
+> DNS Registries/Registrars should deny requests to register this reserved domain name.
+
 ## EAP Provisioning Identifier Registry
 
-IANA is instructed to update the "Extensible Authentication Protocol
-(EAP) Registry" with a new child registry.
+IANA is instructed to add the following new registry to the "Extensible Authentication Protocol (EAP) Registry" group.
 
 Assignments in this registry are done via "Expert Review" as described in {{RFC8126}} Section 4.5.
 
@@ -307,7 +340,7 @@ The contents of the registry are as follows.
 
 Title
 
-> EAP Provisioning Identifier Registry
+> EAP Provisioning Identifiers
 
 Registration Procedure(s)
 
@@ -466,5 +499,7 @@ TBD.
 # Changelog
 
 * 00 - initial version
+
+* 01 - add "Domain Name Reservation Considerations"
 
 --- back
