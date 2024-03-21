@@ -25,6 +25,7 @@ author:
   email: aland@freeradius.org
 
 normative:
+  RFC1034:
   BCP14: RFC8174
   RFC3748:
   RFC5216:
@@ -37,7 +38,6 @@ informative:
   RFC2865:
   RFC7170:
   RFC8952:
-  RFC9191:
   I-D.friel-tls-eap-dpp:
 
 venue:
@@ -47,12 +47,7 @@ venue:
 
 --- abstract
 
-This document defines the eap.arpa domain as a way for EAP peers to
-signal to EAP servers that they wish to obtain limited, and
-unauthenticated, network access.  EAP peers leverage user identifier
-portion of the Network Access Identifier (NAI) format of RFC7542 in
-order to describe what kind of provisioning they need.  A table of
-identifiers and meanings is defined.
+This document defines the eap.arpa domain as a way for EAP peers to signal to EAP servers that they wish to obtain limited, and unauthenticated, network access.  EAP peers leverage the realm portion of the Network Access Identifier (NAI) format of RFC7542 in order to describe what kind of provisioning they need.  A table of realms and meanings is defined.
 
 --- middle
 
@@ -94,19 +89,9 @@ NAI is composed of two portions, the utf8-username, and the utf8-realm
 domain.  For simplicity here, we refer to these as the "username" and
 "realm" fields.
 
-The realm is chosen to be non-routable, so that the EAP packet
-exchange is not sent across an Authentication, Authorization, and
-Accounting (AAA) proxy framework as defined in {{RFC7542}} Section 3.
-Instead, the packets remains local to the EAP server.  If the EAP
-server implements this standard, then it can proceed with the full EAP
-conversation.  If the EAP server does not implement this standard,
-then it MUST reply with an EAP Failure, as per {{RFC3748}} Section
-4.2.
+If the EAP server implements this standard, then it can proceed with the full EAP conversation.  If the EAP server does not implement this standard, then it MUST reply with an EAP Failure, as per {{RFC3748}} Section 4.2.
 
-We note that this specification is fully compatible with all existing
-EAP implementations, so its is fail-safe.  When presented with a peer
-wishing to use this specification, existing implementations will
-return EAP Failure, and will not otherwise misbehave.
+We note that this specification is fully compatible with all existing EAP implementations, i.e., it is backwards compatible.  When presented with a peer wishing to use this specification, existing implementations will return EAP Failure, and will not otherwise misbehave.
 
 We now discuss the NAI format in more detail.  We first discuss the
 eap.arpa realm, and second the use and purpose of the username field.
@@ -121,49 +106,26 @@ that concept, and standardizes the practices surrounding it,
 NOTE: the "arpa" domain is controlled by the IAB.  Allocation of
 "eap.arpa" requires agreement from the IAB.
 
+## The realm field
+
+The sub domain in realm is assigned via the EAP Provisioning Identifier Registry which is defined in {{registry}}. The registry holds strings such as "noob" identifying the EAP method being used for limited initial authentication and provisioning for EAP methods that also provision credentials. Naturally, the sub domain must follow the domain name conventions specified in {{RFC1034}}.
+
 ## The username field
 
-The username field is assigned via the EAP Provisioning Identifier
-Registry which is defined below.  The registry can either hold a fixed
-string such as "noob", or a prefix such as "V-".  Prefixes give
-vendors and Service delivery organizations (SDOs) the ability to
-self-assign a delegated range of identifiers which cannot conflict
-with other identifiers.
-
-The username field MUST NOT omitted.  That is, "@eap.arpa" is not a
-valid identifier for the purposes of this specification.  {{RFC7542}}
-recommends omitting the username portion for user privacy.  As user
-privacy is not needed here, the username field can be publicly visible.
+The username field is dependent on the EAP method being used for provisioning. For example, {{RFC9140}} uses the username "noob". Other EAP methods MAY omit the username as RECOMMENDED in {{RFC7542}} or use the username "anonymous" as permitted by {{RFC7542}}.
 
 # Overview
 
-For EAP-TLS, both {{RFC5216}} Section 2.1.1 and {{RFC9190}} provide
-for "peer unauthenticated access".  However, those documents define no
-way for a peer to signal that it is requesting such access.  The
-presumption is that the peer connects with some value for the EAP
-Identity, but without using a client certificate.  The EAP server is
-then supposed to determine that the peer is requesting unauthenticated
-access, and take the approprate steps to limit authorization.
+For EAP-TLS, both {{RFC5216}} Section 2.1.1 and {{RFC9190}} provide for "peer unauthenticated access".  However, those documents define no way for a peer to signal that it is requesting such access.  The presumption is that the peer connects with some value for the EAP Identity, but without using a client certificate.  The EAP server is then supposed to determine that the peer is requesting unauthenticated access, and take the approprate steps to limit authorization.
 
-There appears to be no EAP peer or server implementations which
-support such access, since there is no defined way to perform any of
-the steps required.  i.e. to signal that this access is desired, and
-then limit access.
+There appears to be no EAP peer or server implementations which support such access, since there is no defined way to perform any of the steps required.  i.e. to signal that this access is desired, and then limit access.
 
 TBD: The Wireless Broadband Alliance (WBA) has defined an unauthenticated
 EAP-TLS method, using a vendor-specific EAP type. Get link.
 
-EAP-NOOB {{RFC9140}} takes this process a step further.  It defines both
-a way to signal that provisioning is desired, and also a way to
-exchange provisioning information within EAP-NOOB.  That is, there is
-no need for the device to obtain limited network access, as all of the
-provisioning is done inside of the EAP-NOOB protocol.
+EAP-NOOB {{RFC9140}} takes this process a step further.  It defines both a way to signal that provisioning is desired, and also a way to exchange provisioning information within EAP-NOOB.  That is, there is no need for the device to obtain limited network access, as all of the provisioning is done inside of the EAP-NOOB protocol.
 
-TEAP {{RFC7170}} provides for provisioning via an unauthenticated TLS
-tunnel.  There is a server unauthenticated provisioning mode (TBD),
-but the inner TLS exchange requires that both end authenticate each
-other.  There are ways to provision a certificate, but the peer must
-still authenticate itself to the server.
+TEAP {{RFC7170}} provides for provisioning via an unauthenticated TLS tunnel.  There is a server unauthenticated provisioning mode ({{RFC7170}} section 3.8.3), but the inner TLS exchange requires that both end authenticate each other.  There are ways to provision a certificate, but the peer must still authenticate itself to the server.
 
 ## Taxonomy of Provisioning Types
 
@@ -176,11 +138,7 @@ over more complex protocols.
 
 ### Rationale for Provisioning over EAP
 
-It is often useful to do all provisioning inside of EAP, because the EAP / AAA
-admin does not have control over the network.  It is not always
-possible to define a captive portal where provisioning can be done.
-As a result, we need to be able to perform provisioning via EAP, and
-not via some IP protocol.
+It is often useful to do all provisioning inside of EAP, because the EAP / AAA admin does not have control over the network.  It is not always possible to define a captive portal where provisioning can be done. As a result, we need to be able to perform provisioning via EAP, and not via some IP protocol.
 
 # Interaction with existing EAP types
 
@@ -213,11 +171,7 @@ locally configured.
 
 ## EAP-TLS
 
-This document defines an identifier "portal@eap.arpa", which is the
-first step towards permitted unauthenticated client provisioning in
-EAP-TLS.  The purpose of the identifier is to allow EAP peers to
-signal EAP servers that they wish to obtain a "captive portal" style
-network access.
+This document defines registers the sub domain tls under the special use domain name eap.arpa to form the NAI "@tls.eap.arpa", which is the first step towards permitting unauthenticated client provisioning in EAP-TLS.  The purpose of the identifier is to allow EAP peers to signal EAP servers that they wish to obtain a "captive portal" style network access.
 
 This identifier signals the EAP server that the peer wishes to obtain
 "peer unauthenticated access" as per {{RFC5216}} Section 2.1.1 and
@@ -255,8 +209,7 @@ benefit over EAP-TLS.
 
 ## EAP-NOOB
 
-It is RECOMMENDED that server implementations of EAP-NOOB accept both
-identities "noob@eap-noob.arpa" and "noob@eap.arpa" as synonyms.
+This document defines registers the sub domain noob under the special use domain name eap.arpa to form the NAI "@noob.eap.arpa". It is RECOMMENDED that server implementations of EAP-NOOB accept both identities "noob@eap-noob.arpa" and "noob@noob.eap.arpa" as synonyms.
 
 It is RECOMMENDED that EAP-NOOB peers use "noob@eap.arpa" first, and
 if that does not succeed, use "noob@eap-noob.arpa"
@@ -296,72 +249,31 @@ REFERENCE
 
 > THIS-DOCUMENT
 
-## EAP Provisioning Identifier Registry
+## EAP Provisioning Identifiers Registry {#registry}
 
 IANA is instructed to update the "Extensible Authentication Protocol
 (EAP) Registry" with a new child registry.
 
-Assignments in this registry are done via "Expert Review" as described in {{RFC8126}} Section 4.5.
+Assignments in this registry are done via "Expert Review" as described in {{RFC8126}} Section 4.5. Guidelines for experts is provided in {{guidelines}}.
 
-The contents of the registry are as follows.
+The initial contents of the registry are as follows.
 
-Title
+| Method   | Identifier  | NAI            |    Description           |
+|----------|-------------|----------------|--------------------------|
+| EAP-NOOB | noob        | @noob.eap.arpa |  When using EAP-NOOB provisioning{{RFC9140}} |
+| EAP-TLS  | tls         | @tls.eap.arpa  |  When using  unauthenticated TLS for limited connectivy and further provisiong     {{RFC9190}}  |
 
-> EAP Provisioning Identifier Registry
 
-Registration Procedure(s)
+## Guidelines for Designated Experts {#guidelines}
 
-> Expert review
+EAP methods in the "Method" field of this registry MUST be an EAP method in the EAP Method Types registry maintained by IANA or MUST be an Expanded Type (which indicates a vendor specific EAP method).
 
-Reference
+The NAI registered should correspond to the method name. Care should be taken so that the domain name conventions specified in {{RFC1034}} are followed. The sub domains in eap.arpa are case-insensitive.  While {{RFC7542}} notes that similar identifiers of different case can be considered to be different, this registry follows the  simpler by requiring case-insensitivity.
 
-> THIS-DOCUMENT
-
-Registry
-
-> Name
->
->> The name of the identifier.  Names are listed in sorted order, case insensitive.
->
-> Prefix
->
->> A boolean true/false flag indicating if this name is a prefix.
->
-> Description
->
->> Description of the use-cases for this identifier.
->
-> Reference
->
->> Reference where this identifier was defined.
-
-### Initial Values
-
-The following table gives the initial values for this table.
-
-Value,Prefix,Description,Reference
-
-noob,false,EAP-NOOB,RFC9140 and THIS-DOCUMENT
-portal,false,generic captive portal,THIS-DOCUMENT
-V-,true,reserved for vendor self-assignment,THIS-DOCUMENT
-
-## Guidelines for Designated Experts
-
-Identifiers and prefixes in the "Name" field of this registry MUST
-satisfy the "utf8-username" format defined in {{RFC7542}} Section 2.2.
-
-Identifiers should be unique when compared in a case-insensitive
-fashion.  While {{RFC7542}} notes that similar identifiers of
-different case can be considered to be different, this registry is
-made simpler by requiring case-insensitivity.
+Username prefix used with the NAIs are left to individual specifications. For example, {{RFC9190}} uses the username "noob".
 
 Identifiers and prefixes should be short.  The NAIs created from these
-prefixes will generally be sent in a RADIUS packet in the User-Name
-attribute ({{RFC2865}} Section 5.1).  That specification recommends
-that implementations should support User-Names of at least 63 octets.
-NAI length considerations are further discussed in {{RFC7542}} Section
-2.3, and any allocations need to take those limitations into
-consideration.
+identifiers and prefixes will generally be sent in a RADIUS packet in the User-Name attribute ({{RFC2865}} Section 5.1).  That specification recommends that implementations should support User-Names of at least 63 octets. NAI length considerations are further discussed in {{RFC7542}} Section 2.3, and any allocations need to take those limitations into consideration.
 
 Implementations are likely to support a total NAI length of 63 octets.
 Lengths between 63 and 253 octets may work.  Lengths of 254 octets or
@@ -369,8 +281,7 @@ more will not work with RADIUS {{RFC2865}}.
 
 For registration requests where a Designated Expert should be
 consulted, the responsible IESG area director should appoint the
-Designated Expert.  The intention is that any non-prefix allocation
-will be accompanied by a published RFC.  But in order to allow for the
+Designated Expert.  .  But in order to allow for the
 allocation of values prior to the RFC being approved for publication,
 the Designated Expert can approve allocations once it seems clear that
 an RFC will be published.
