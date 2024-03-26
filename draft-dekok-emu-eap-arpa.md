@@ -25,13 +25,13 @@ author:
   email: aland@freeradius.org
 
 normative:
+  RFC1034:
   BCP14: RFC8174
   RFC3748:
   RFC5216:
   RFC7542:
   RFC8126:
   RFC9140:
-  RFC9190:
 
 informative:
   RFC2865:
@@ -47,9 +47,7 @@ venue:
 
 This document defines the eap.arpa domain as a way for EAP peers to
 signal to EAP servers that they wish to obtain limited, and
-unauthenticated, network access.  EAP peers leverage user identifier
-portion of the Network Access Identifier (NAI) format of RFC7542 in
-order to describe what kind of provisioning they need.  A table of
+unauthenticated, network access.  EAP peers signal which kind of access is required via certain pre-defined identifiers which use the Network Access Identifier (NAI) format of RFC7542.  A table of
 identifiers and meanings is defined.
 
 --- middle
@@ -93,14 +91,21 @@ domain.  For simplicity here, we refer to these as the "username" and
 "realm" fields.
 
 The realm is chosen to be non-routable, so that the EAP packet
-exchange is not sent across an Authentication, Authorization, and
-Accounting (AAA) proxy framework as defined in {{RFC7542}} Section 3.
-Instead, the packets remains local to the EAP server.  If the EAP
+exchange is not normally sent across an Authentication, Authorization,
+and Accounting (AAA) proxy framework as defined in {{RFC7542}} Section
+3.  Instead, the packets generally remains local to the EAP server.
+
+This specification does not, however, forbid routing of realms in the
+"eap.arpa" domain.  The use of "eap.arpa" means that any such routing
+does not happen automatically.  Instead, it routing of that domain
+must be explicitly configured locally, and be done with full consent
+of all parties which need to authenticate NAIs in that domain.
+
+If the EAP
 server implements this standard, then it can proceed with the full EAP
 conversation.  If the EAP server does not implement this standard,
 then it MUST reply with an EAP Failure, as per {{RFC3748}} Section
 4.2.
-
 We note that this specification is fully compatible with all existing
 EAP implementations, so its is fail-safe.  When presented with a peer
 wishing to use this specification, existing implementations will
@@ -119,19 +124,52 @@ that concept, and standardizes the practices surrounding it,
 NOTE: the "arpa" domain is controlled by the IAB.  Allocation of
 "eap.arpa" requires agreement from the IAB.
 
+## The realm field
+
+The sub-domain in realm is assigned via the EAP Provisioning
+Identifier Registry which is defined in [](#registry). The sub-domain
+MUST follow the domain name conventions specified in {{RFC1034}}.
+
+It is RECOMMENDED that the first sub-domain of "eap.arpa" use the EAP
+method name, as defined in the IANA Extensible Authentication Protocol
+(EAP) Registry, sub-table "Method Types".  However, that registry does
+not follow the domain name conventions specified in {{RFC1034}}, so it
+is not possible to make a "one-to-one" mapping between the Method Type
+name and the subdomain.
+
+Where it is not possible to make a direct mapping between the EAP
+Method Type name (e.g. "TEAP"), and a sub-domain
+(e.g. "teap.eap.arpa"), the name used in the realm registry SHOULD be
+similar enough to allow the average reader to understand which EAP
+Method Type is being used.
+
+Additional sub-domains are permitted, which permit vendors and Service
+delivery organizations (SDOs) the ability to self-assign a delegated
+range of identifiers which cannot conflict with other identifiers.
+
+Any realm defined in this registry (e.g. "teap.eap.arpa") also
+implicitly defines a subdomain "v." (e.g. "v.teap.eap.arpa").  Vendors
+can self-allocate within the "v." subdomain, using domains which they
+own.  For example, 3GPP specifications could self-allocate and use the
+realm "3gpp.org.v.teap.arpa".
+
 ## The username field
 
+The username field is dependent on the EAP method being used for
+provisioning. For example, {{RFC9140}} uses the username "noob". Other
+EAP methods MAY omit the username as RECOMMENDED in {{RFC7542}}.  The
+username of "anonymous" is NOT RECOMMENDED for specifications using
+this format, even though it is permitted by {{RFC7542}}.
+
 The username field is assigned via the EAP Provisioning Identifier
-Registry which is defined below.  The registry can either hold a fixed
-string such as "noob", or a prefix such as "V-".  Prefixes give
-vendors and Service delivery organizations (SDOs) the ability to
-self-assign a delegated range of identifiers which cannot conflict
-with other identifiers.
+Registry which is defined in [](#registry).  The username field MUST
+be either empty, or hold a fixed string such as "provisioning".
 
 The username field MUST NOT omitted.  That is, "@eap.arpa" is not a
 valid identifier for the purposes of this specification.  {{RFC7542}}
-recommends omitting the username portion for user privacy.  As user
-privacy is not needed here, the username field can be publicly visible.
+recommends omitting the username portion for user privacy.  As the
+names are defined in public specifications, user privacy is not needed
+here, and the username field can be publicly visible.
 
 # Overview
 
@@ -254,13 +292,10 @@ benefit over EAP-TLS.
 ## EAP-NOOB
 
 It is RECOMMENDED that server implementations of EAP-NOOB accept both
-identities "noob@eap-noob.arpa" and "noob@eap.arpa" as synonyms.
+identities "noob@eap-noob.arpa" and "@noob.eap.arpa" as synonyms.
 
-It is RECOMMENDED that EAP-NOOB peers use "noob@eap.arpa" first, and
+It is RECOMMENDED that EAP-NOOB peers use "@noob.eap.arpa" first, and
 if that does not succeed, use "noob@eap-noob.arpa"
-
-@todo - what is the deployment of EAP-NOOB?  Can we even make this
-recommendation?
 
 # IANA Considerations
 
@@ -330,11 +365,11 @@ This section answers the questions which are required by Section 5 of {{?RFC6761
 
 > DNS Registries/Registrars should deny requests to register this reserved domain name.
 
-## EAP Provisioning Identifier Registry
+## EAP Provisioning Identifiers Registry {#registry}
 
 IANA is instructed to add the following new registry to the "Extensible Authentication Protocol (EAP) Registry" group.
 
-Assignments in this registry are done via "Expert Review" as described in {{RFC8126}} Section 4.5.
+Assignments in this registry are done via "Expert Review" as described in {{RFC8126}} Section 4.5.  Guidelines for experts is provided in [](#guidelines).
 
 The contents of the registry are as follows.
 
@@ -372,13 +407,28 @@ Registry
 
 The following table gives the initial values for this table.
 
-Value,Prefix,Description,Reference
+@todo - add EAP Method Type Name
+
+@todo - change to using NAI
+
+Identifier,Prefix,Description,Reference
 
 noob,false,EAP-NOOB,RFC9140 and THIS-DOCUMENT
 portal,false,generic captive portal,THIS-DOCUMENT
 V-,true,reserved for vendor self-assignment,THIS-DOCUMENT
 
-## Guidelines for Designated Experts
+## Guidelines for Designated Experts {#guidelines}
+
+Values in "Method Type" field of this registry MUST be taken from the
+IANA EAP Method Types registry or MUST be an Expanded Type (which
+indicates a vendor specific EAP method).
+
+The sub-domain of the NAI field should correspond to the EAP Method
+Type name.  Care should be taken so that the domain name conventions
+specified in {{RFC1034}} are followed. The sub domains in eap.arpa are
+case-insensitive. While {{RFC7542}} notes that similar identifiers of
+different case can be considered to be different, for simplicity this
+registry requires that all entries MUST be lowercase.
 
 Identifiers and prefixes in the "Name" field of this registry MUST
 satisfy the "utf8-username" format defined in {{RFC7542}} Section 2.2.
@@ -388,13 +438,13 @@ fashion.  While {{RFC7542}} notes that similar identifiers of
 different case can be considered to be different, this registry is
 made simpler by requiring case-insensitivity.
 
-Identifiers and prefixes should be short.  The NAIs created from these
-prefixes will generally be sent in a RADIUS packet in the User-Name
-attribute ({{RFC2865}} Section 5.1).  That specification recommends
-that implementations should support User-Names of at least 63 octets.
-NAI length considerations are further discussed in {{RFC7542}} Section
-2.3, and any allocations need to take those limitations into
-consideration.
+Entries in the registry shuld be short.  NAIs defined here will
+generally be sent in a RADIUS packet in the User-Name attribute
+({{RFC2865}} Section 5.1).  That specification recommends that
+implementations should support User-Names of at least 63 octets.  NAI
+length considerations are further discussed in {{RFC7542}} Section
+2.3, and any allocations in this registry needs to take those
+limitations into consideration.
 
 Implementations are likely to support a total NAI length of 63 octets.
 Lengths between 63 and 253 octets may work.  Lengths of 254 octets or
@@ -402,11 +452,10 @@ more will not work with RADIUS {{RFC2865}}.
 
 For registration requests where a Designated Expert should be
 consulted, the responsible IESG area director should appoint the
-Designated Expert.  The intention is that any non-prefix allocation
-will be accompanied by a published RFC.  But in order to allow for the
-allocation of values prior to the RFC being approved for publication,
-the Designated Expert can approve allocations once it seems clear that
-an RFC will be published.
+Designated Expert.  But in order to allow for the allocation of values
+prior to the RFC being approved for publication, the Designated Expert
+can approve allocations once it seems clear that an RFC will be
+published.
 
 For allocation of a prefix, the Designated Expert should verify that
 the requested prefix clearly identifies the organization requesting
