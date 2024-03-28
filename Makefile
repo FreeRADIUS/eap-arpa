@@ -34,4 +34,8 @@ clean:
 tag:
 	@git tag ${DRAFT}-${VERSION}
 
+.PHONY: spell
+spell: $(DRAFT).md
+	aspell -d en_US -c $<
+
 .PRECIOUS: ${DRAFT}.xml
