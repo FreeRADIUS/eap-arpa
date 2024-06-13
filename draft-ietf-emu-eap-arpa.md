@@ -1,13 +1,13 @@
 ---
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-dekok-emu-eap-arpa-01
+docname: draft-ietf-emu-eap-arpa-00
 updates: 9140
 
 stand_alone: true
 ipr: trust200902
 area: Internet
-wg: EMY Working Group
+wg: EMU Working Group
 kw: Internet-Draft
 cat: std
 submissionType: IETF
@@ -34,9 +34,17 @@ normative:
   RFC9140:
 
 informative:
+  HOTSPOT:
+     title: "Passpoint"
+     author:
+       name: Wi-Fi Alliance
+     format:
+       TXT: https://www.wi-fi.org/discover-wi-fi/passpoint
+  IEEE.802-1X.2020:
   RFC2865:
   RFC7170:
   RFC8952:
+  RFC9190:
 
 venue:
   group: EMU
@@ -44,7 +52,7 @@ venue:
   github: freeradius/eap-arpa.git
 
 --- abstract
-
+>
 This document defines the eap.arpa domain as a way for EAP peers to
 signal to EAP servers that they wish to obtain limited, and
 unauthenticated, network access.  EAP peers signal which kind of access is required via certain pre-defined identifiers which use the Network Access Identifier (NAI) format of RFC7542.  A table of
@@ -179,15 +187,17 @@ way for a peer to signal that it is requesting such access.  The
 presumption is that the peer connects with some value for the EAP
 Identity, but without using a client certificate.  The EAP server is
 then supposed to determine that the peer is requesting unauthenticated
-access, and take the approprate steps to limit authorization.
+access, and take the appropriate steps to limit authorization.
 
 There appears to be no EAP peer or server implementations which
 support such access, since there is no defined way to perform any of
 the steps required.  i.e. to signal that this access is desired, and
 then limit access.
 
-TBD: The Wireless Broadband Alliance (WBA) has defined an unauthenticated
-EAP-TLS method, using a vendor-specific EAP type. Get link.
+The Wi-Fi Alliance has defined an unauthenticated EAP-TLS method,
+using a vendor-specific EAP type as part of HotSpot 2.0r2 {{HOTSPOT}}.
+However, there appears to be little or no deployments of this
+specification.
 
 EAP-NOOB {{RFC9140}} takes this process a step further.  It defines both
 a way to signal that provisioning is desired, and also a way to
@@ -196,10 +206,10 @@ no need for the device to obtain limited network access, as all of the
 provisioning is done inside of the EAP-NOOB protocol.
 
 TEAP {{RFC7170}} provides for provisioning via an unauthenticated TLS
-tunnel.  There is a server unauthenticated provisioning mode (TBD),
-but the inner TLS exchange requires that both end authenticate each
-other.  There are ways to provision a certificate, but the peer must
-still authenticate itself to the server.
+tunnel.  That document provides for a server unauthenticated
+provisioning mode, but the inner TLS exchange requires that both end
+authenticate each other.  There are ways to provision a certificate,
+but the peer must still authenticate itself to the server.
 
 ## Taxonomy of Provisioning Types
 
@@ -220,7 +230,7 @@ not via some IP protocol.
 
 # Interaction with existing EAP types
 
-As the provisioning identifer is used within EAP, it necessarily has
+As the provisioning identifier is used within EAP, it necessarily has
 interactions with, and effects on, the various EAP types.  This
 section discusses those effects in more detail.
 
@@ -236,9 +246,6 @@ identity and inner authentication method, the credentials used there
 MUST be the provisioning identifier for both the inner identity, and
 any inner password.
 
-This process ensures that most EAP methods will work for provisioning,
-at the expense of potential security attacks.  TBD - discuss.
-
 It is RECOMMENDED that provisioning be done via a TLS-based EAP methods.
 TLS provides for authentication of the EAP server, along with security
 and confidentiality of any provisioning data exchanged in the tunnel.
@@ -249,9 +256,9 @@ locally configured.
 
 ## EAP-TLS
 
-This document defines an identifier "portal@eap.arpa", which is the
-first step towards permitted unauthenticated client provisioning in
-EAP-TLS.  The purpose of the identifier is to allow EAP peers to
+This document defines an identifier "portal@tls.eap.arpa", which is
+the first step towards permitted unauthenticated client provisioning
+in EAP-TLS.  The purpose of the identifier is to allow EAP peers to
 signal EAP servers that they wish to obtain a "captive portal" style
 network access.
 
@@ -261,8 +268,12 @@ This identifier signals the EAP server that the peer wishes to obtain
 
 An EAP server which agrees to authenticate this request MUST ensure
 that the device is placed into a captive portal with limited network
-access.  Further details of the captive portal architecture can be
-found in {{RFC8952}}.
+access.  Implementations SHOULD limit both the total amount of data
+transferred by devices in the captive portal, and SHOULD also limit the
+total amount of time a device spends within the captive portal.
+
+Further details of the captive portal architecture can be found in
+{{RFC8952}}.
 
 The remaining question is how the EAP peer verifies the identity of
 the EAP server.  The device SHOULD ignore the EAP server certificate
@@ -286,7 +297,7 @@ inner identity and password is also the provisioning identifier.
 
 Is is RECOMMENDED that provisioning methods use EAP-TLS in preference
 to any other TLS-based EAP methods.  As the credentials for other
-methods are predefined and known in advanc, those methods offer little
+methods are predefined and known in advance, those methods offer little
 benefit over EAP-TLS.
 
 ## EAP-NOOB
@@ -387,17 +398,13 @@ Reference
 
 Registry
 
-> Name
+> NAI
 >
->> The name of the identifier.  Names are listed in sorted order, case insensitive.
+>> The Network Access Identifier in {{RFC7542}} format.  Names are lowercase, and are listed in sorted order.
 >
-> Prefix
+> Method Type
 >
->> A boolean true/false flag indicating if this name is a prefix.
->
-> Description
->
->> Description of the use-cases for this identifier.
+>> The EAP method name, taken from the "Description" field of the EAP "Method Types" registry.
 >
 > Reference
 >
@@ -407,31 +414,36 @@ Registry
 
 The following table gives the initial values for this table.
 
-@todo - add EAP Method Type Name
+NAI,Method-Type,Description,Reference
 
-@todo - change to using NAI
-
-Identifier,Prefix,Description,Reference
-
-noob,false,EAP-NOOB,RFC9140 and THIS-DOCUMENT
-portal,false,generic captive portal,THIS-DOCUMENT
-V-,true,reserved for vendor self-assignment,THIS-DOCUMENT
+@noob.eap.arpa,EAP-NOOB,RFC9140 and THIS-DOCUMENT
+portal@tls.eap.arpa,EAP-TLS,RFC9190 and THIS-DOCUMENT
 
 ## Guidelines for Designated Experts {#guidelines}
 
-Values in "Method Type" field of this registry MUST be taken from the
-IANA EAP Method Types registry or MUST be an Expanded Type (which
-indicates a vendor specific EAP method).
+The following text gives guidelines for Designated Experts who review
+allocation requests for this registry.
+
+### NAIs
+
+The intent is for the NAI to contain both a reference to the EAP
+Method Type, and a description of the purpose of the NAI.  For
+example, with an EAP Method Type "name", and a purpose "action", the
+NAI SHOULD be of the form "action@foo.eap.arpa".
+
+The NAI MUST satisfy the requirements of the {{RFC7542, Section 2.2}}
+format.  The utf8-username portion MAY be empty.  The utf8-username
+portion MUST NOT be "anonymous".  The NAI MUST end with "eap.arpa".
+The NAI SHOULD NOT contain more than one subdomain.
 
 The sub-domain of the NAI field should correspond to the EAP Method
 Type name.  Care should be taken so that the domain name conventions
-specified in {{RFC1034}} are followed. The sub domains in eap.arpa are
-case-insensitive. While {{RFC7542}} notes that similar identifiers of
-different case can be considered to be different, for simplicity this
-registry requires that all entries MUST be lowercase.
+specified in {{RFC1034}} are followed.
 
-Identifiers and prefixes in the "Name" field of this registry MUST
-satisfy the "utf8-username" format defined in {{RFC7542}} Section 2.2.
+The NAIs in this registry are case-insensitive.  While {{RFC7542}}
+notes that similar identifiers of different case can be considered to
+be different, for simplicity this registry requires that all entries
+MUST be lowercase.
 
 Identifiers should be unique when compared in a case-insensitive
 fashion.  While {{RFC7542}} notes that similar identifiers of
@@ -450,22 +462,25 @@ Implementations are likely to support a total NAI length of 63 octets.
 Lengths between 63 and 253 octets may work.  Lengths of 254 octets or
 more will not work with RADIUS {{RFC2865}}.
 
+## Method Type
+
+Values in "Method Type" field of this registry MUST be taken from the
+IANA EAP Method Types registry or else it MUST be an Expanded Type
+which usually indicates a vendor specific EAP method.
+
+The EAP Method Type MUST provide an MSK and EMSK as defined in
+{{RFC3748}}.  Failure to provide these keys means that the method will
+not be usable within an authentication framework which requires those
+methods, such as with IEEE 802.1X {{IEEE.802-1X.2020}}.
+
+## Designated Experts
+
 For registration requests where a Designated Expert should be
 consulted, the responsible IESG area director should appoint the
 Designated Expert.  But in order to allow for the allocation of values
 prior to the RFC being approved for publication, the Designated Expert
 can approve allocations once it seems clear that an RFC will be
 published.
-
-For allocation of a prefix, the Designated Expert should verify that
-the requested prefix clearly identifies the organization requesting
-the prefix, that there is a publicly available document from the
-organization which describes the prefix, and that the prefix ends with
-the "-" character.
-
-Once a prefix has been assigned, it is not possible to perform further
-allocations in this registry which use that prefix.  All such
-allocations have instead been delegated to the external organization.
 
 The Designated expert will post a request to the EMU WG mailing list
 (or a successor designated by the Area Director) for comment and
@@ -478,77 +493,67 @@ justified by an explanation, and in the cases where it is possible,
 concrete suggestions on how the request can be modified so as to
 become acceptable should be provided.
 
-A short-hand summary of the requirements follows:
+## Vendor Self Assignment
 
-* Identifiers and prefixes in the "Name" field of this registry MUST satisfy the "utf8-username" format defined in {{RFC7542}} Section 2.2.
+This registry provides for vendor self-assignment within the NAI
+space.  Any NAI defined in this registry also implicitly defines a
+subdomain "v." for vendor or SDO self-allocation.  For example, an NAI
+"action@foo.eap.arpa" uses a realm "foo.eap.arpa".  Vendors and SDOs
+can self-allocate in this space, under the "v." subdomain,
+"v.foo.eap.arpa".
 
-* Names MUST be unique, compared in a case-insensitive fashion.
+Any domain name which is registered as a Fully Qualified Domain Name
+(FQDN) within the DNS can use that name within the "v." subdomain.
+For example, 3GPP specifications could self-allocate the realm
+""@3gpp.org.v.foo.arpa", and then use any utf8-username within that
+realm.
 
-* Prefixes MUST NOT overlap with the beginning any other identifier.  That is, if the prefix "foo-" has been allocated, then an identifier of "foo-bar" MUST NOT be allocated.
-
-* If the "prefix" flag is "false", then the Name field MUST NOT end with the "-" character.
-
-* If the "prefix" flag is "true", then the Name field MUST end with the "-" character.
-
-### Example of Vendor Self Assignment
-
-Identifiers beginning with "V-" are for vendor self-assignment.  The
-name MUST begin with the string "V-", following by 1 or more digits
-(0-9).  The digits used here are taken from the vendor private
-enterprise number (PEN).
-
-The name MUST then contain another "-" which delineates the vendor
-specific suffix namespace.  The suffix is managed and allocated by the
-vendor, and does not need to be added to the registry.
-
-The suffix is text which matches the "dot-string" definition of
-{{RFC7542}} Section 2.2.
-
-For example, an identifier chosen by Cisco (PEN of 9) could be:
-
-> V-9-foo
-
-Which then creates an NAI of the form:
-
-> V-9-foo@eap.arpa
-
-### Example of Service Delivery Organization
-
-Service delivery organizations (SDOs) can request allocations of
-prefixes for use within their SDO.  The prefix should be the name
-(abbreviated where possible) of the SDO, followed by a "-" character.
-The suffix is managed and allocated by the SDO, and does not need to
-be added to the registry.
-
-The suffix is text which matches the "dot-string" definition of
-{{RFC7542}} Section 2.2.
-
-For example, the 3rd Generation Partnership Project (3GPP) could
-request a prefix "3gpp-", and then self-assign a suffix "baz", to
-create an identifier:
-
-> 3gpp-baz
-
-Which then creates an NAI of the form:
-
-> 3gpp-baz@eap.arpa
+Note that the right to use a self-allocated name is tied to the
+ownership of the corresponding subdomain.  If an entity loses the
+right to use a domain name, the right to use that domain name within
+the "v." self-allocation space is immediately revoked.
 
 # Privacy Considerations
 
-TBD
+The EAP Identity field is generally publicly visible to parties who
+can observe the EAP traffic.  As the names given here are in a public
+specification, there is no privacy implication to exposing those names
+within EAP.  The entire goal of this specification is in fact to make
+those names public, so that unknown (and private) parties can publicly
+(and anonymously) declare what kind of network access they desire.
+
+However, there are many additional privacy concerns around this
+specification.  Most EAP traffic is sent over RADIUS {{RFC2865}}.  The
+RADIUS Access-Request packets typically contain large amounts of
+information such as MAC addresses, device location, etc.
+
+This specification does not change RADIUS or EAP, and as such does not
+change which information is publicly available, or is kept private.
+Those issues are dealt with in other specifications.
+
+However, this specification can increase privacy by allowing devices
+to anonymously obtain network access, and then securely obtain
+credentials.
 
 # Security Considerations
 
-TBD
+This specification defines a framework which permits unknown,
+anonymous, and unauthenticated devices to request and to obtain
+network access.  As such, it is critical that network operators
+provide limited access to those devices.
+
+Future specifications which define an NAI within this registry, should
+give detailed descriptions of what kind of network access is to be
+provided.
 
 # Acknowledgements
 
-TBD.
+Mohit Sethi provided valuable insight that using subdomains was better
+and more informative than the original method, which used only the
+utf8-username portion of the NAI.
 
 # Changelog
 
 * 00 - initial version
-
-* 01 - add "Domain Name Reservation Considerations"
 
 --- back
