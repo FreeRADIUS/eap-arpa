@@ -1,7 +1,7 @@
 ---
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-00
+docname: draft-ietf-emu-eap-arpa-01
 updates: 9140
 
 stand_alone: true
@@ -21,12 +21,12 @@ author:
 
 - ins: A. DeKok
   name: Alan DeKok
-  org: FreeRADIUS
-  email: aland@freeradius.org
+  org: InkBridge Networks
+  email: aland@inkbridgenetworks.com
 
 normative:
   RFC1034:
-  BCP14: RFC8174
+  RFC8174:
   RFC3748:
   RFC5216:
   RFC7542:
@@ -40,7 +40,7 @@ informative:
        name: Wi-Fi Alliance
      format:
        TXT: https://www.wi-fi.org/discover-wi-fi/passpoint
-  IEEE.802-1X.2020:
+  IEEE_802.1X_2020:
   RFC2865:
   RFC7170:
   RFC8952:
@@ -52,7 +52,7 @@ venue:
   github: freeradius/eap-arpa.git
 
 --- abstract
->
+
 This document defines the eap.arpa domain as a way for EAP peers to
 signal to EAP servers that they wish to obtain limited, and
 unauthenticated, network access.  EAP peers signal which kind of access is required via certain pre-defined identifiers which use the Network Access Identifier (NAI) format of RFC7542.  A table of
@@ -179,6 +179,19 @@ recommends omitting the username portion for user privacy.  As the
 names are defined in public specifications, user privacy is not needed
 here, and the username field can be publicly visible.
 
+## Notes on AAA Routability
+
+When we say that the eap.arpa domain is not routable in an AAA proxy
+framework, we mean that the domain does not exist, and will never
+resolve to anything for dynamic DNS lookups as defined in
+{{?RFC7585}}.  In addition, administrators will not have statically
+configuered AAA proxy routes for this domain.
+
+In order to avoid spurious DNS lookups, RADIUS servers supporting
+{{?RFC7585}} SHOULD perform filtering in the domains which are sent to
+DNS.  Specifically, names in the "eap.arpa" domain SHOULD NOT be
+looked up in DNS.
+
 # Overview
 
 For EAP-TLS, both {{RFC5216}} Section 2.1.1 and {{RFC9190}} provide
@@ -237,8 +250,8 @@ section discusses those effects in more detail.
 Some EAP methods require shared credentials such as passwords in order
 to succeed.  For example, both EAP-MSCHAPv2 (PEAP) and EAP-PWD
 {{?RFC5931}} perform cryptographic exchanges where both parties
-knowing a shared password.  Where those methods are used, the password
-MUST be the same as the provisioning identifier.
+knowing a shared password.  Where password-based methods are used, the
+password MUST be the same as the provisioning identifier.
 
 This requirement also applies to TLS-based EAP methods such as TTLS
 and PEAP.  Where the TLS-based EAP method provides for an inner
@@ -288,6 +301,10 @@ the CAs available for the web in order to validate the EAP server
 certificate.  If the presented certificate passes validation, the
 device does not need to warn the end user that the provided
 certificate is untrusted.
+
+It is possible to also use TLS-PSK with EAP-TLS for this provisioning.
+In which case, the PSK identity MUST the same as the EAP Identifier,
+and the PSK MUST be the provisioning identifier.
 
 ## TLS-based EAP methods
 
@@ -353,6 +370,8 @@ This section answers the questions which are required by Section 5 of {{?RFC6761
 > EAP servers and clients are expected to make their software recognize these names as special and treat them differently.  This document discusses that behavor.
 >
 > EAP supplicants should recognize these names as special, and should refuse to allow users to enter them in any interface.
+>
+> EAP servers and RADIUS servers should recognize the ".arpa" domain as special, and refuse to do dynamic DNS lookups ({{?RFC7585}}) for it.
 
 3. Name Resolution APIs and Libraries:
 
@@ -368,7 +387,9 @@ This section answers the questions which are required by Section 5 of {{?RFC6761
 
 6.  DNS Server Operators:
 
-> These domain names have no impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.
+> These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.
+>
+> Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic DNS lookups for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.
 >
 > If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
 
@@ -471,7 +492,7 @@ which usually indicates a vendor specific EAP method.
 The EAP Method Type MUST provide an MSK and EMSK as defined in
 {{RFC3748}}.  Failure to provide these keys means that the method will
 not be usable within an authentication framework which requires those
-methods, such as with IEEE 802.1X {{IEEE.802-1X.2020}}.
+methods, such as with IEEE 802.1X {{IEEE_802.1X_2020}}
 
 ## Designated Experts
 
@@ -545,6 +566,31 @@ provide limited access to those devices.
 Future specifications which define an NAI within this registry, should
 give detailed descriptions of what kind of network access is to be
 provided.
+
+## On-Path Attackers and Impersonation
+
+In most EAP use-cases, the server identity is validated (usually
+through a certificate), or the EAP method allows the TLS tunnel to be
+cryptographically bound to the inner application data.  For the
+methods outlined here, the use of public credentials, and/or skipping
+server validation allows "on-path" attacks to succeed where they would
+normally fail
+
+EAP supplicants and peers MUST assume that all data sent over an EAP
+session is visible to attackers, and can be modified by them.
+
+The methods defined here SHOULD only be used to bootstrap initial
+network access.  All subsequence application-layer traffic SHOULD be
+full authenticated and secured with systems such as IPSec or TLS.
+
+## Privacy Considerations
+
+The NAIs used here are contained in a public registry, and therefore
+do not have to follow the username privacy recommendations of
+{{RFC7542, Section 2.4}}.  However, there may be other personally
+identifying information contained in EAP or AAA packets.  This
+situation is no different from normal EAP authentication, and thus
+has no additional positive or negative implications for privacy.
 
 # Acknowledgements
 
