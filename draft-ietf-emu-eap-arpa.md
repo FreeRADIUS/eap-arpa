@@ -1,7 +1,7 @@
----
+----
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-01
+docname: draft-ietf-emu-eap-arpa-02
 updates: 9140
 
 stand_alone: true
@@ -40,7 +40,6 @@ informative:
        name: Wi-Fi Alliance
      format:
        TXT: https://www.wi-fi.org/discover-wi-fi/passpoint
-  IEEE_802.1X_2020:
   RFC2865:
   RFC7170:
   RFC8952:
@@ -170,14 +169,71 @@ username of "anonymous" is NOT RECOMMENDED for specifications using
 this format, even though it is permitted by {{RFC7542}}.
 
 The username field is assigned via the EAP Provisioning Identifier
-Registry which is defined in [](#registry).  The username field MUST
-be either empty, or hold a fixed string such as "provisioning".
+Registry which is defined in [](#registry).  The username field MAY be
+empty, or else hold a fixed value. While {{RFC7542}} recommends
+omitting the username portion for user privacy, the names are defined
+in public specifications.  User privacy is therefore not needed here,
+and the username field can be publicly visible.
 
-The username field MUST NOT omitted.  That is, "@eap.arpa" is not a
-valid identifier for the purposes of this specification.  {{RFC7542}}
-recommends omitting the username portion for user privacy.  As the
-names are defined in public specifications, user privacy is not needed
-here, and the username field can be publicly visible.
+## Operational Considerations
+
+Haviong defined the format and contents of NAIs in the eap.arpa realm,
+we now need to define how those NAIs are used by EAP supplicants and
+EAP peers.
+
+### EAP Supplicants
+
+An EAP supplicant signals that it wishes a certain kind of
+provisioning by using a particular NAI, along with an associated EAP
+method.  The meaning of the NAI, and behavior of the supplicant are
+defined by a separate specification which defines the NAI.
+
+The NAI used by the supplicant MUST match the EAP method.  NAIs in the
+eap.arpa domain MUST NOT be used for EAP methods which do not have an
+entry in the "EAP Provisioning Identifiers" registry.
+
+EAP supplicants MUST NOT allow these NAIs to be configured directly by
+end users.  Instead the user (or some other process) chooses a
+provisioning method, and the EAP supplicant then chooses a pre-defined NAI
+which matches that provisioning method.
+
+### EAP Peers
+
+Implementations MUST check that the NAI matches the EAP method
+being used.  Mis-matched NAIs MUST result in an EAP Failure.
+
+For example, an NAI of "@tls.eap.arpa" MUST NOT be used for any EAP
+method other than EAP-TLS.
+
+Implementations MUST treat supplicants using a provisioning NAI as
+untrusted, and untrustworthy.  Implementations MUST place supplicants
+using a provisioning NAI into a limited network, such as a captive
+portal.
+
+Implementations SHOULD give supplicants access which is limited in
+duration.  The provisioning process should be fairly quick, and of the
+order of seconds to tens of seconds in duration.  Provisioning times
+longer than that likely indicate an issue.
+
+Implementations SHOULD give supplicants access which is limited in
+scope.  The provisioning process likely does not need to download
+large amounts of data, and likely does not need access to a large
+number of services.  The provisioning networks SHOULD allow only
+traffic which is necessary for the operation of the named provisioning
+method.
+
+Implementations SHOULD use functionality such as the RADIUS Filter-Id
+attribute ({{?RFC2865, Section 5.11}}) to set packet filters for the
+supplicant being provisioned.  For ease of administration, the
+Filter-Id name could simply be the NAI, or a similar name.  Such
+consistency aids with operational considerations when managing complex
+networks.
+
+Implementations SHOULD rate-limit provisioning attempts.  A
+misbehaving supplicant should be blocked temporarily, or even
+permanently. Implementations SHOULD limit the total number of
+supplicants being provisioned at the same time.  There is no
+requirement to allow all supplicants to connect without limit.
 
 ## Notes on AAA Routability
 
@@ -466,7 +522,7 @@ notes that similar identifiers of different case can be considered to
 be different, for simplicity this registry requires that all entries
 MUST be lowercase.
 
-Identifiers should be unique when compared in a case-insensitive
+Identifiers MUST be unique when compared in a case-insensitive
 fashion.  While {{RFC7542}} notes that similar identifiers of
 different case can be considered to be different, this registry is
 made simpler by requiring case-insensitivity.
@@ -492,7 +548,7 @@ which usually indicates a vendor specific EAP method.
 The EAP Method Type MUST provide an MSK and EMSK as defined in
 {{RFC3748}}.  Failure to provide these keys means that the method will
 not be usable within an authentication framework which requires those
-methods, such as with IEEE 802.1X {{IEEE_802.1X_2020}}
+methods, such as with IEEE 802.1X.
 
 ## Designated Experts
 
@@ -582,6 +638,13 @@ session is visible to attackers, and can be modified by them.
 The methods defined here SHOULD only be used to bootstrap initial
 network access.  All subsequence application-layer traffic SHOULD be
 full authenticated and secured with systems such as IPSec or TLS.
+
+## Provisioning is Unauthenticated
+
+We note that this specification allows for unauthenticated supplicants
+to obtain network access, however limited.  As with any
+unauthenticated process, it can be abused.  Implementations should
+take care to limit the use of the provisioning network.
 
 ## Privacy Considerations
 
