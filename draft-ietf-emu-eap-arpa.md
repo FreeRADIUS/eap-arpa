@@ -1,4 +1,4 @@
-----
+---
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
 docname: draft-ietf-emu-eap-arpa-03
@@ -222,7 +222,7 @@ current set expires.  Unfortunately, any re-provisioning process with
 EAP will involve the device dropping off of the "full" network, in
 order to connect to the provisioning network.  It is therefore
 RECOMMENDED that re-provisioning methods be provided which can be used
-when the device has full network access.  See []{#specifications} for
+when the device has full network access.  See [](#specifications) for
 additional discussion of this topic.
 
 ### EAP Servers
