@@ -61,18 +61,15 @@ identifiers and meanings is defined.
 
 # Introduction
 
-In most uses, EAP {{RFC3748}} requires that the EAP peer have a known
-identity.  However, when the peer does not already have an identity,
-this requirement creates a bootstrapping problem.  It may not be
-possible for the device to obtain network access without credentials.
-However, credentials are usually required in order to obtain network
-access.  As a result, the device is unprovisioned, and unable to be
-provisioned.
+In most uses, EAP {{RFC3748}} requires that the EAP peer have
+pre-provisioned credentials.  Without credentials, the device cannot
+obtain network access in order to be provisioned with credentials.
+This limitation creates a bootstrapping problem.
 
 This specification addresses that problem.  It creates a framework by
-which clients can submit predefined credentials to a server in order to
+which clients can submit predefined provisioning credentials to a server in order to
 obtain limited network access.  At the same time, servers can know in
-advance that these credentials are only to be used for provisioning,
+advance that these credentials are to be used only for provisioning,
 and that unrestricted network access should not be granted.
 
 The device can either use the EAP channel itself for provisioning, as
@@ -81,9 +78,15 @@ a limited captive portal such as with {{RFC8952}}.  Once the device is
 provisioned, it can use those provisioned credentials to obtain full
 network access.
 
-The identifiers used here are generically referred to as "EAP
+The pre-defined credentials use a generic identity format.
+Identifiers in this space are generically referred to as "EAP
 Provisioning Identifiers" (EPI).  The choice of "Provisioning
 Identifiers for EAP" (PIE) was considered and rejected.
+
+Since the identity is predefined, there is little benefit to defining
+pre-defined passwords.  Where supported by the underlying EAP method,
+this specification provides for password-less access.  Where passwords
+are required, the password is defined to be the same as the identity.
 
 # Terminology
 
@@ -97,24 +100,19 @@ NAI is composed of two portions, the utf8-username, and the utf8-realm
 domain.  For simplicity here, we refer to these as the "username" and
 "realm" fields.
 
-The realm is chosen to be non-routable, so that the EAP packet
-exchange is not normally sent across an Authentication, Authorization,
-and Accounting (AAA) proxy framework as defined in {{RFC7542}} Section
-3.  Instead, the packets generally remains local to the EAP server.
+The realm is chosen to be independent of, and unused by, any existing
+organization, and thus to be usable by all organizations.  The realm is
+one which should not be automatically proxied by any any
+Authentication, Authorization, and Accounting (AAA) proxy framework as
+defined in {{RFC7542, Section 3}}.  The realm is also one which will
+not return results for {{?RFC7585}} dynamic discovery.
 
-This specification does not, however, forbid routing of realms in the
-"eap.arpa" domain.  The use of "eap.arpa" means that any such routing
-does not happen automatically.  Instead, it routing of that domain
-must be explicitly configured locally, and be done with full consent
-of all parties which need to authenticate NAIs in that domain.
+This specification does not, however, forbid routing of packets for
+realms in the "eap.arpa" domain.  Instead, it leaves such routing up
+to individual organizations.
 
-If the EAP
-server implements this standard, then it can proceed with the full EAP
-conversation.  If the EAP server does not implement this standard,
-then it MUST reply with an EAP Failure, as per {{RFC3748}} Section
-4.2.
 We note that this specification is fully compatible with all existing
-EAP implementations, so its is fail-safe.  When presented with a peer
+EAP implementations, so it is fail-safe.  When presented with a peer
 wishing to use this specification, existing implementations will
 return EAP Failure, and will not otherwise misbehave.
 
@@ -133,32 +131,33 @@ NOTE: the "arpa" domain is controlled by the IAB.  Allocation of
 
 ## The realm field
 
-The sub-domain in realm is assigned via the EAP Provisioning
-Identifier Registry which is defined in [](#registry). The sub-domain
+The subdomain in realm is assigned via the EAP Provisioning
+Identifier Registry which is defined in [](#registry). The subdomain
 MUST follow the domain name conventions specified in {{RFC1034}}.
 
-It is RECOMMENDED that the first sub-domain of "eap.arpa" use the EAP
+It is RECOMMENDED that the first subdomain of "eap.arpa" use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
-(EAP) Registry, sub-table "Method Types".  However, that registry does
+(EAP) Registry, sub-registry "Method Types".  However, that registry does
 not follow the domain name conventions specified in {{RFC1034}}, so it
 is not possible to make a "one-to-one" mapping between the Method Type
 name and the subdomain.
 
 Where it is not possible to make a direct mapping between the EAP
-Method Type name (e.g. "TEAP"), and a sub-domain
+Method Type name (e.g. "TEAP"), and a subdomain
 (e.g. "teap.eap.arpa"), the name used in the realm registry SHOULD be
 similar enough to allow the average reader to understand which EAP
 Method Type is being used.
 
-Additional sub-domains are permitted, which permit vendors and Service
-delivery organizations (SDOs) the ability to self-assign a delegated
-range of identifiers which cannot conflict with other identifiers.
+Additional subdomains are permitted in the realm, which permit vendors and
+Standards Development organizations (SDOs) the ability to self-assign
+a delegated range of identifiers which cannot conflict with other
+identifiers.
 
 Any realm defined in this registry (e.g. "teap.eap.arpa") also
 implicitly defines a subdomain "v." (e.g. "v.teap.eap.arpa").  Vendors
-can self-allocate within the "v." subdomain, using domains which they
-own.  For example, 3GPP specifications could self-allocate and use the
-realm "3gpp.org.v.teap.arpa".
+or SDOs can self-allocate within the "v." subdomain, using domains
+which they own.  For example, An "example.com" company could self-allocate
+and use the realm "example.com.v.teap.eap.arpa".
 
 ## The username field
 
@@ -171,51 +170,95 @@ this format, even though it is permitted by {{RFC7542}}.
 The username field is assigned via the EAP Provisioning Identifier
 Registry which is defined in [](#registry).  The username field MAY be
 empty, or else hold a fixed value. While {{RFC7542}} recommends
-omitting the username portion for user privacy, the names are defined
-in public specifications.  User privacy is therefore not needed here,
+omitting the username portion for user privacy, the names here are defined
+in public specifications.  User privacy is therefore not needed for provisioning identifiers,
 and the username field can be publicly visible.
 
-## Operational Considerations
+## Operation
 
-Haviong defined the format and contents of NAIs in the eap.arpa realm,
+Having defined the format and contents of NAIs in the eap.arpa realm,
 we now need to define how those NAIs are used by EAP supplicants and
 EAP peers.
 
-### EAP Supplicants
+### EAP Peer
 
-An EAP supplicant signals that it wishes a certain kind of
-provisioning by using a particular NAI, along with an associated EAP
+An EAP peer signals that it wishes a certain kind of
+provisioning by using a predefined NAI, along with an associated EAP
 method.  The meaning of the NAI, and behavior of the supplicant are
-defined by a separate specification which defines the NAI.
+defined by a separate specification.  That specification will
+typically define both the NAI, and the EAP method which is used for
+provisioning.
 
-The NAI used by the supplicant MUST match the EAP method.  NAIs in the
-eap.arpa domain MUST NOT be used for EAP methods which do not have an
-entry in the "EAP Provisioning Identifiers" registry.
+The NAI used by the peer MUST be taken from an entry in the "EAP
+Provisioning Identifiers" registry, and the EAP method used with that
+NAI MUST match the corresponding EAP method from that same entry.
 
-EAP supplicants MUST NOT allow these NAIs to be configured directly by
+EAP peers MUST NOT allow these NAIs to be configured directly by
 end users.  Instead the user (or some other process) chooses a
-provisioning method, and the EAP supplicant then chooses a pre-defined NAI
+provisioning method, and the peer then chooses a predefined NAI
 which matches that provisioning method.
 
-### EAP Peers
+When all goes well, running EAP with the provisioning NAI results in
+new authentication credentials being provisioned.  The peer then drops
+its network connection, and re-authenticates using the newly
+provisioned credentials.
 
-Implementations MUST check that the NAI matches the EAP method
-being used.  Mis-matched NAIs MUST result in an EAP Failure.
+There are a number of ways in which provisioning can fail.  One way is
+when the server does not implement the provisioning method.  EAP peers
+therefore MUST track which provisioning methods have been tried, and
+not repeat the same method to the same EAP server when receiving a
+NAK.  EAP peers MUST rate limit attempts at provisioning, in order to
+avoid overloading the server.
 
-For example, an NAI of "@tls.eap.arpa" MUST NOT be used for any EAP
-method other than EAP-TLS.
+Another way for provisioning to fail is when the new credentials do
+not result in network access.  It is RECOMMENDED that peers
+immediately try to gain network access using the new credentials, as
+soon as they have been provisioned.  That process allows errors to be
+quickly discovered and addressed.
 
-Implementations MUST treat supplicants using a provisioning NAI as
-untrusted, and untrustworthy.  Implementations MUST place supplicants
-using a provisioning NAI into a limited network, such as a captive
-portal.
+An EAP peer may be have been provisioned with temporary credentials.
+It SHOULD therefore attempt to provision new credentials before the
+current set expires.  Unfortunately, any re-provisioning process with
+EAP will involve the device dropping off of the "full" network, in
+order to connect to the provisioning network.  It is therefore
+RECOMMENDED that re-provisioning methods be provided which can be used
+when the device has full network access.  See []{#specifications} for
+additional discussion of this topic.
 
-Implementations SHOULD give supplicants access which is limited in
-duration.  The provisioning process should be fairly quick, and of the
-order of seconds to tens of seconds in duration.  Provisioning times
-longer than that likely indicate an issue.
+### EAP Servers
 
-Implementations SHOULD give supplicants access which is limited in
+An EAP session begins with the server receiving an initial
+EAP-Request/Identity message.  An EAP server supporting this
+specification MUST examining the identity to see if it uses the
+eap.arpa realm.  If not, the EAP server MUST process the request
+through pre-existing methods.
+
+If the server receives a malformed NAI in the eap.arpa domain, it MUST
+reply with an EAP Failure, as per {{RFC3748, Section 4.2}}.
+
+Similarly, if the server does not support the current provisioning
+method, and is unable to negotiate a different one, it MUST reply with
+a NAK of type zero (0) as per {{RFC3748, Section 5.3.1}}.  This reply
+indicates that the requested provisioning method is not available, and
+that the peer should choose a different method of authentication.
+That different method may be another provisioning method, or it may be
+a full authentication.
+
+Once the server accepts the provisioning method, it then replies with
+an EAP method which MUST match the one proposed by the supplicant in
+the NAI.  The EAP process then proceeds as per the EAP state machine
+outlined in {{RFC3748}}.
+
+Implementations MUST treat peers using a provisioning NAI as
+untrusted, and untrustworthy.  Once a peer is authenticated, it
+MUST be placed into a limited network, such as a captive portal.
+
+Systems implementing this specification SHOULD give peers access which
+is limited in duration.  The provisioning process should be fairly
+quick, and of the order of seconds to tens of seconds in duration.
+Provisioning times longer than that likely indicate an issue.
+
+Implementations SHOULD give peers access which is limited in
 scope.  The provisioning process likely does not need to download
 large amounts of data, and likely does not need access to a large
 number of services.  The provisioning networks SHOULD allow only
@@ -224,24 +267,77 @@ method.
 
 Implementations SHOULD use functionality such as the RADIUS Filter-Id
 attribute ({{?RFC2865, Section 5.11}}) to set packet filters for the
-supplicant being provisioned.  For ease of administration, the
-Filter-Id name could simply be the NAI, or a similar name.  Such
+peer being provisioned.  For ease of administration, the Filter-Id
+name could simply be the provisioning NAI, or a similar name.  Such
 consistency aids with operational considerations when managing complex
 networks.
 
 Implementations SHOULD rate-limit provisioning attempts.  A
-misbehaving supplicant should be blocked temporarily, or even
+misbehaving peer should be blocked temporarily, or even
 permanently. Implementations SHOULD limit the total number of
-supplicants being provisioned at the same time.  There is no
-requirement to allow all supplicants to connect without limit.
+peers being provisioned at the same time.  There is no
+requirement to allow all peers to connect without limit.
+
+## Other Considerations
+
+Implementations MUST NOT permit EAP method negotiation with
+provisioning credentials.  That is, when a provisioning NAI is used,
+any EAP NAK sent by a server MUST contain only EAP type zero (0).
+Similarly, when an EAP peer uses a provisioning NAI and receives an
+EAP NAK, the contents MUST be ignored.
+
+While a server may support multiple provisioning methods, there is no
+way in EAP to negotiate which provisioning method can be used.  It is
+also expected that the provisioning methods will be specific to a
+particular type of device.  That is, a device is likely to support
+only one provisioning method.
+
+As a result, there is no need to require a method for negotiating
+provisioning methods.
+
+## Considerations for Provisioning Specifications {#specifications}
+
+The operational considerations discussed above have a number of
+impacts on specifications which define provisioning methods.
+
+### Negotiation
+
+Specifications which define provisioning for an EAP method SHOULD
+provide a method-specific process by which implementations can
+negotiate a mutually acceptable provisioning method.
+
+For the reasons noted above, however, we cannot make this suggestion
+mandatory.  If it is not possible for a provisioning method to define
+any negotiation, then that limitation should not be a barrier to
+publishing the specification.
+
+### Renewal of Credentials
+
+Where a provisioning method is expected to create credentials which do
+not expire, the specification SHOULD state this explicitly.
+
+Where credentials expire, it is RECOMMENDED that specifications
+provide guidance on how the credentials are to be updated.  For
+example, an EAP method could permit re-provisioning to be done as part
+of a normal EAP authentication, using the currently provisioned
+credentials.
+
+It is RECOMMENDED that the provisioning methods provide for a method
+which can be used without affecting network access.  A specification
+could define provisioning endpoints such as Enrollment over Secure
+Transport (EST) {{?RFC7030}}, or Automatic Certificate Management
+Environment (ACME) {{?RFC8555}}.  The provisioning endpoints could be
+available both on the provisioning network, and on the provisioned
+(i.e. normal) network.  Such an architecture means that devices can be
+re-provisioned without losing network access.
 
 ## Notes on AAA Routability
 
 When we say that the eap.arpa domain is not routable in an AAA proxy
 framework, we mean that the domain does not exist, and will never
-resolve to anything for dynamic DNS lookups as defined in
+resolve to anything for dynamic discovery as defined in
 {{?RFC7585}}.  In addition, administrators will not have statically
-configuered AAA proxy routes for this domain.
+configured AAA proxy routes for this domain.
 
 In order to avoid spurious DNS lookups, RADIUS servers supporting
 {{?RFC7585}} SHOULD perform filtering in the domains which are sent to
@@ -249,6 +345,12 @@ DNS.  Specifically, names in the "eap.arpa" domain SHOULD NOT be
 looked up in DNS.
 
 # Overview
+
+In this section, we provide background on the existing functionality,
+and describe why it was necessary to define provisioning methods for
+EAP.
+
+## Review of Existing Functionality
 
 For EAP-TLS, both {{RFC5216}} Section 2.1.1 and {{RFC9190}} provide
 for "peer unauthenticated access".  However, those documents define no
@@ -265,8 +367,7 @@ then limit access.
 
 The Wi-Fi Alliance has defined an unauthenticated EAP-TLS method,
 using a vendor-specific EAP type as part of HotSpot 2.0r2 {{HOTSPOT}}.
-However, there appears to be little or no deployments of this
-specification.
+However, there appears to be few deployments of this specification.
 
 EAP-NOOB {{RFC9140}} takes this process a step further.  It defines both
 a way to signal that provisioning is desired, and also a way to
@@ -278,7 +379,8 @@ TEAP {{RFC7170}} provides for provisioning via an unauthenticated TLS
 tunnel.  That document provides for a server unauthenticated
 provisioning mode, but the inner TLS exchange requires that both end
 authenticate each other.  There are ways to provision a certificate,
-but the peer must still authenticate itself to the server.
+but the peer must still authenticate itself to the server with
+pre-existing credentials.
 
 ## Taxonomy of Provisioning Types
 
@@ -326,7 +428,7 @@ locally configured.
 ## EAP-TLS
 
 This document defines an identifier "portal@tls.eap.arpa", which is
-the first step towards permitted unauthenticated client provisioning
+the first step towards enabling unauthenticated client provisioning
 in EAP-TLS.  The purpose of the identifier is to allow EAP peers to
 signal EAP servers that they wish to obtain a "captive portal" style
 network access.
@@ -417,41 +519,30 @@ REFERENCE
 
 This section answers the questions which are required by Section 5 of {{?RFC6761}}.  At a high level, these new domain names are used in certain situations in EAP.  The domain names are never seen by users, and they do not appear in any networking protocol other than EAP.
 
-1. Users:
+1. Users:  
+User are not expected to recognize these names as special or use them differently from other domain names.  The use of these names in EAP is invisible to end users.
 
-> User are not expected to recognise these names as special or use them differently from other domain names.  The use of these names in EAP is invisible to end users.
+2. Application Software:  
+EAP servers and clients are expected to make their software recognize these names as special and treat them differently.  This document discusses that behavior.  
+EAP supplicants should recognize these names as special, and should refuse to allow users to enter them in any interface.  
+EAP servers and RADIUS servers should recognize the ".arpa" domain as special, and refuse to do dynamic discovery ({{?RFC7585}}) for it.
 
-2. Application Software:
+3. Name Resolution APIs and Libraries:  
+Writers of these APIs and libraries are not expected to recognize these names or treat them differently.
 
-> EAP servers and clients are expected to make their software recognize these names as special and treat them differently.  This document discusses that behavor.
->
-> EAP supplicants should recognize these names as special, and should refuse to allow users to enter them in any interface.
->
-> EAP servers and RADIUS servers should recognize the ".arpa" domain as special, and refuse to do dynamic DNS lookups ({{?RFC7585}}) for it.
+4. Caching DNS Servers:  
+Writers of caching DNS servers are not expected to recognize these names or treat them differently.
 
-3. Name Resolution APIs and Libraries:
+5. Authoritative DNS Servers:  
+Writers of authoritative DNS servers are not expected to recognize these names or treat them differently.
 
-> Writers of these APIs and libraries are not expected to recognize these names or treat them differently.
+6.  DNS Server Operators:  
+These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.  
+Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.  
+If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
 
-4. Caching DNS Servers:
-
-> Writers of caching DNS servers are not expected to recognize these names or treat them differently.
-
-5. Authoritative DNS Servers:
-
-> Writers of authoritative DNS servers are not expected to recognize these names or treat them differently.
-
-6.  DNS Server Operators:
-
-> These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.
->
-> Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic DNS lookups for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.
->
-> If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
-
-7. DNS Registries/Registrars:
-
-> DNS Registries/Registrars should deny requests to register this reserved domain name.
+7. DNS Registries/Registrars:  
+DNS Registries/Registrars should deny requests to register this reserved domain name.
 
 ## EAP Provisioning Identifiers Registry {#registry}
 
@@ -511,9 +602,12 @@ NAI SHOULD be of the form "action@foo.eap.arpa".
 The NAI MUST satisfy the requirements of the {{RFC7542, Section 2.2}}
 format.  The utf8-username portion MAY be empty.  The utf8-username
 portion MUST NOT be "anonymous".  The NAI MUST end with "eap.arpa".
-The NAI SHOULD NOT contain more than one subdomain.
 
-The sub-domain of the NAI field should correspond to the EAP Method
+NAIs in the registry SHOULD NOT contain more than one subdomain.  NAIs
+with a leading "v." subdomain MUST NOT be registered.  That subdomain
+is reserved for vendor and SDO extensions.
+
+The subdomain of the NAI field should correspond to the EAP Method
 Type name.  Care should be taken so that the domain name conventions
 specified in {{RFC1034}} are followed.
 
@@ -527,7 +621,7 @@ fashion.  While {{RFC7542}} notes that similar identifiers of
 different case can be considered to be different, this registry is
 made simpler by requiring case-insensitivity.
 
-Entries in the registry shuld be short.  NAIs defined here will
+Entries in the registry should be short.  NAIs defined here will
 generally be sent in a RADIUS packet in the User-Name attribute
 ({{RFC2865}} Section 5.1).  That specification recommends that
 implementations should support User-Names of at least 63 octets.  NAI
@@ -570,25 +664,21 @@ justified by an explanation, and in the cases where it is possible,
 concrete suggestions on how the request can be modified so as to
 become acceptable should be provided.
 
-## Vendor Self Assignment
+## Organization Self Assignment
 
-This registry provides for vendor self-assignment within the NAI
-space.  Any NAI defined in this registry also implicitly defines a
-subdomain "v." for vendor or SDO self-allocation.  For example, an NAI
-"action@foo.eap.arpa" uses a realm "foo.eap.arpa".  Vendors and SDOs
-can self-allocate in this space, under the "v." subdomain,
-"v.foo.eap.arpa".
+This registry allows organizations to request allocations from this
+registry, but explicit allocations are not always required.  Any NAI
+defined in this registry also implicitly defines a subdomain "v.".
+Organizations can can self-allocate in this space, under the "v."
+subdomain, e.g. "local@example.com.v.tls.eap.arpa".
 
 Any domain name which is registered as a Fully Qualified Domain Name
 (FQDN) within the DNS can use that name within the "v." subdomain.
-For example, 3GPP specifications could self-allocate the realm
-""@3gpp.org.v.foo.arpa", and then use any utf8-username within that
-realm.
 
-Note that the right to use a self-allocated name is tied to the
-ownership of the corresponding subdomain.  If an entity loses the
-right to use a domain name, the right to use that domain name within
-the "v." self-allocation space is immediately revoked.
+Note that the right to use a self-allocated name is tied the ownership
+of the corresponding domain.  If an organization loses the right to
+use a domain name, then it is no longer appropriate for it to use that
+domain name within the "v." self-allocation space.
 
 # Privacy Considerations
 
@@ -606,7 +696,8 @@ information such as MAC addresses, device location, etc.
 
 This specification does not change RADIUS or EAP, and as such does not
 change which information is publicly available, or is kept private.
-Those issues are dealt with in other specifications.
+Those issues are dealt with in other specifications, such as
+{{?I-D.ietf-radext-deprecating-radius}}.
 
 However, this specification can increase privacy by allowing devices
 to anonymously obtain network access, and then securely obtain
@@ -632,11 +723,11 @@ methods outlined here, the use of public credentials, and/or skipping
 server validation allows "on-path" attacks to succeed where they would
 normally fail
 
-EAP supplicants and peers MUST assume that all data sent over an EAP
+EAP peers and servers MUST assume that all data sent over an EAP
 session is visible to attackers, and can be modified by them.
 
 The methods defined here SHOULD only be used to bootstrap initial
-network access.  All subsequence application-layer traffic SHOULD be
+network access.  All subsequent application-layer traffic SHOULD be
 full authenticated and secured with systems such as IPSec or TLS.
 
 ## Provisioning is Unauthenticated
