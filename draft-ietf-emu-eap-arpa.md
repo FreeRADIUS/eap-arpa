@@ -1,7 +1,7 @@
 ----
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-02
+docname: draft-ietf-emu-eap-arpa-03
 updates: 9140
 
 stand_alone: true
