@@ -1,7 +1,7 @@
 ---
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-03
+docname: draft-ietf-emu-eap-arpa-04
 updates: 9140
 
 stand_alone: true
@@ -52,9 +52,9 @@ venue:
 
 --- abstract
 
-This document defines the eap.arpa domain as a way for EAP peers to
+This document defines the eap.arpa domain as a way for Extensible Authentication Protocol (EAP) peers to
 signal to EAP servers that they wish to obtain limited, and
-unauthenticated, network access.  EAP peers signal which kind of access is required via certain pre-defined identifiers which use the Network Access Identifier (NAI) format of RFC7542.  A table of
+unauthenticated, network access.  EAP peers signal which kind of access is required via certain pre-defined identifiers which use the Network Access Identifier (NAI) format of RFC 7542.  A table of
 identifiers and meanings is defined.
 
 --- middle
@@ -207,7 +207,7 @@ There are a number of ways in which provisioning can fail.  One way is
 when the server does not implement the provisioning method.  EAP peers
 therefore MUST track which provisioning methods have been tried, and
 not repeat the same method to the same EAP server when receiving a
-NAK.  EAP peers MUST rate limit attempts at provisioning, in order to
+an EAP Nak.  EAP peers MUST rate limit attempts at provisioning, in order to
 avoid overloading the server.
 
 Another way for provisioning to fail is when the new credentials do
@@ -365,7 +365,7 @@ support such access, since there is no defined way to perform any of
 the steps required.  i.e. to signal that this access is desired, and
 then limit access.
 
-The Wi-Fi Alliance has defined an unauthenticated EAP-TLS method,
+Wi-Fi Alliance has defined an unauthenticated EAP-TLS method,
 using a vendor-specific EAP type as part of HotSpot 2.0r2 {{HOTSPOT}}.
 However, there appears to be few deployments of this specification.
 
@@ -375,7 +375,7 @@ exchange provisioning information within EAP-NOOB.  That is, there is
 no need for the device to obtain limited network access, as all of the
 provisioning is done inside of the EAP-NOOB protocol.
 
-TEAP {{RFC7170}} provides for provisioning via an unauthenticated TLS
+Tunnel Extensible Authentication Protocol (TEAP) {{RFC7170}} provides for provisioning via an unauthenticated TLS
 tunnel.  That document provides for a server unauthenticated
 provisioning mode, but the inner TLS exchange requires that both end
 authenticate each other.  There are ways to provision a certificate,
@@ -388,7 +388,7 @@ There are two scenarios where provisioning can be done.  The first is
 where provisioning is done within the EAP type, as with EAP-NOOB
 {{RFC9140}}.  The second is where EAP is used to obtain limited
 network access (e.g. as with a captive portal).  That limited network
-access is then used to run Internet Protocol (IP) based provisioning
+access is then used to run IP based provisioning
 over more complex protocols.
 
 ### Rationale for Provisioning over EAP
@@ -411,8 +411,8 @@ to succeed.  For example, both EAP-MSCHAPv2 (PEAP) and EAP-PWD
 knowing a shared password.  Where password-based methods are used, the
 password MUST be the same as the provisioning identifier.
 
-This requirement also applies to TLS-based EAP methods such as TTLS
-and PEAP.  Where the TLS-based EAP method provides for an inner
+This requirement also applies to TLS-based EAP methods such as EAP Tunneled Transport Layer Security (EAP-TTLS)
+and Protected Extensible Authentication Protocol (PEAP).  Where the TLS-based EAP method provides for an inner
 identity and inner authentication method, the credentials used there
 MUST be the provisioning identifier for both the inner identity, and
 any inner password.
@@ -420,7 +420,7 @@ any inner password.
 It is RECOMMENDED that provisioning be done via a TLS-based EAP methods.
 TLS provides for authentication of the EAP server, along with security
 and confidentiality of any provisioning data exchanged in the tunnel.
-Similarly if provisioning is done in a captive portal outside of EAP,
+Similarly, if provisioning is done in a captive portal outside of EAP,
 EAP-TLS permits the EAP peer to run a full EAP authentication session
 while having nothing more than a few certification authorities (CAs)
 locally configured.
@@ -448,12 +448,12 @@ Further details of the captive portal architecture can be found in
 
 The remaining question is how the EAP peer verifies the identity of
 the EAP server.  The device SHOULD ignore the EAP server certificate
-entirely, as the servers identity does not matter.  Any verification
+entirely, as the server's identity does not matter.  Any verification
 of servers can be done at the HTTPS layer when the device access the
 captive portal.  Where possible the device SHOULD warn the end user
 that the provided certificate is unchecked, and untrusted.
 
-However, since the device likely is configured with web CAs (otherwise
+However, since the device likely is configured with web CAs (otherwise,
 the captive portal would also be unauthenticated), EAP peers MAY use
 the CAs available for the web in order to validate the EAP server
 certificate.  If the presented certificate passes validation, the
@@ -461,7 +461,7 @@ device does not need to warn the end user that the provided
 certificate is untrusted.
 
 It is possible to also use TLS-PSK with EAP-TLS for this provisioning.
-In which case, the PSK identity MUST the same as the EAP Identifier,
+In which case, the Pre-Shared Key (PSK) identity MUST the same as the EAP Identifier,
 and the PSK MUST be the provisioning identifier.
 
 ## TLS-based EAP methods
@@ -470,14 +470,14 @@ Other TLS-based EAP methods such as TTLS and PEAP can use the same
 method as defined for EAP-TLS above.  The only difference is that the
 inner identity and password is also the provisioning identifier.
 
-Is is RECOMMENDED that provisioning methods use EAP-TLS in preference
+It is RECOMMENDED that provisioning methods use EAP-TLS in preference
 to any other TLS-based EAP methods.  As the credentials for other
 methods are predefined and known in advance, those methods offer little
 benefit over EAP-TLS.
 
 ## EAP-NOOB
 
-It is RECOMMENDED that server implementations of EAP-NOOB accept both
+It is RECOMMENDED that server implementations of Nimble out-of-band authentication for EAP (EAP-NOOB) accept both
 identities "noob@eap-noob.arpa" and "@noob.eap.arpa" as synonyms.
 
 It is RECOMMENDED that EAP-NOOB peers use "@noob.eap.arpa" first, and
@@ -537,8 +537,9 @@ Writers of caching DNS servers are not expected to recognize these names or trea
 Writers of authoritative DNS servers are not expected to recognize these names or treat them differently.
 
 6.  DNS Server Operators:  
-These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.  
+These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.\\
 Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.  
+
 If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
 
 7. DNS Registries/Registrars:  
@@ -584,8 +585,8 @@ The following table gives the initial values for this table.
 
 NAI,Method-Type,Description,Reference
 
-@noob.eap.arpa,EAP-NOOB,RFC9140 and THIS-DOCUMENT
-portal@tls.eap.arpa,EAP-TLS,RFC9190 and THIS-DOCUMENT
+@noob.eap.arpa,EAP-NOOB,{{RFC9140}} and THIS-DOCUMENT
+portal@tls.eap.arpa,EAP-TLS,{{RFC9190}} and THIS-DOCUMENT
 
 ## Guidelines for Designated Experts {#guidelines}
 
@@ -653,7 +654,7 @@ prior to the RFC being approved for publication, the Designated Expert
 can approve allocations once it seems clear that an RFC will be
 published.
 
-The Designated expert will post a request to the EMU WG mailing list
+The Designated Expert will post a request to the EMU WG mailing list
 (or a successor designated by the Area Director) for comment and
 review, including an Internet-Draft or reference to external
 specification.  Before a period of 30 days has passed, the Designated
@@ -669,7 +670,7 @@ become acceptable should be provided.
 This registry allows organizations to request allocations from this
 registry, but explicit allocations are not always required.  Any NAI
 defined in this registry also implicitly defines a subdomain "v.".
-Organizations can can self-allocate in this space, under the "v."
+Organizations can self-allocate in this space, under the "v."
 subdomain, e.g. "local@example.com.v.tls.eap.arpa".
 
 Any domain name which is registered as a Fully Qualified Domain Name
@@ -728,7 +729,7 @@ session is visible to attackers, and can be modified by them.
 
 The methods defined here SHOULD only be used to bootstrap initial
 network access.  All subsequent application-layer traffic SHOULD be
-full authenticated and secured with systems such as IPSec or TLS.
+full authenticated and secured with systems such as IPsec or TLS.
 
 ## Provisioning is Unauthenticated
 
