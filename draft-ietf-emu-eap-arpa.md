@@ -1,7 +1,7 @@
 ---
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-04
+docname: draft-ietf-emu-eap-arpa-05
 updates: 9140
 
 stand_alone: true
@@ -55,7 +55,7 @@ venue:
 This document defines the eap.arpa domain as a way for Extensible Authentication Protocol (EAP) peers to
 signal to EAP servers that they wish to obtain limited, and
 unauthenticated, network access.  EAP peers signal which kind of access is required via certain pre-defined identifiers which use the Network Access Identifier (NAI) format of RFC 7542.  A table of
-identifiers and meanings is defined.
+identifiers and meanings is defined, which includes entries for RFC 9140.
 
 --- middle
 
@@ -539,7 +539,6 @@ Writers of authoritative DNS servers are not expected to recognize these names o
 6.  DNS Server Operators:  
 These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.\\
 Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.  
-
 If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
 
 7. DNS Registries/Registrars:  
