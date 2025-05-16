@@ -51,9 +51,10 @@ venue:
 
 --- abstract
 
-This document defines the eap.arpa domain as a way for Extensible Authentication Protocol (EAP) peers to
+This document defines the eap.arpa domain for use in Network Access
+Identifiers (NAIs) as a way for Extensible Authentication Protocol (EAP) peers to
 signal to EAP servers that they wish to obtain limited, and
-unauthenticated, network access.  EAP peers signal which kind of access is required via certain pre-defined identifiers which use the Network Access Identifier (NAI) format of RFC 7542.  A table of
+unauthenticated, network access.  EAP peers signal which kind of access is required via certain predefined identifiers which use the NAI format of RFC 7542.  A table of
 identifiers and meanings is defined, which includes entries for RFC 9140.
 
 --- middle
@@ -65,25 +66,29 @@ pre-provisioned credentials.  Without credentials, the device cannot
 obtain network access in order to be provisioned with credentials.
 This limitation creates a bootstrapping problem.
 
-This specification addresses that problem.  It creates a framework by
-which clients can submit predefined provisioning credentials to a server in order to
+This specification addresses that bootstrapping problem.  It creates a
+framework for predefined "well-known" provisioning credentials, and
+instantiates that framework for two mechanisms.
+Clients can submit these predefined provisioning credentials to a server in order to
 obtain limited network access.  At the same time, servers can know in
 advance that these credentials are to be used only for provisioning,
-and that unrestricted network access should not be granted.
+and avoid granting unrestricted network access to peers submitting
+such credentials.
 
 The device can either use the EAP channel itself for provisioning, as
 with TEAP {{RFC7170}}, or the EAP server can give the device access to
-a limited captive portal such as with {{RFC8952}}.  Once the device is
+a limited captive portal, such as with {{RFC8952}}, within which separate
+provisioning activity can occur.  Once the device is
 provisioned, it can use those provisioned credentials to obtain full
 network access.
 
-The pre-defined credentials use a generic identity format.
+The predefined provisioning credentials use a generic identity format.
 Identifiers in this space are generically referred to as "EAP
 Provisioning Identifiers" (EPI).  The choice of "Provisioning
 Identifiers for EAP" (PIE) was considered and rejected.
 
-Since the identity is predefined, there is little benefit to defining
-pre-defined passwords.  Where supported by the underlying EAP method,
+Since the identity is predefined and for unauthenticated access, there is little benefit to specifying
+predefined passwords.  Where supported by the underlying EAP method,
 this specification provides for password-less access.  Where passwords
 are required, the password is defined to be the same as the identity.
 
@@ -94,7 +99,7 @@ are required, the password is defined to be the same as the identity.
 # Concepts
 
 A device which has no device-specific credentials can use a predefined
-identifier in Network Access Identifier (NAI) format {{RFC7542}}.  The
+provisioning identifier in Network Access Identifier (NAI) format {{RFC7542}}.  The
 NAI is composed of two portions, the utf8-username, and the utf8-realm
 domain.  For simplicity here, we refer to these as the "username" and
 "realm" fields.
@@ -127,15 +132,19 @@ NOTE: the "arpa" domain is controlled by the IAB.  Allocation of
 
 ## The realm field
 
-The subdomain in the "eap.arpa" realm is assigned via the EAP Provisioning
-Identifier Registry which is defined in [](#registry). The subdomain
+The predefined provisioning NAIs enabled by this specification use the
+realm field to indicate the behavior being requested; in particular,
+the subdomain under eap.arpa allows for different requested methods to be
+distinguished.
+The subdomain in the realm field is assigned via the EAP Provisioning
+Identifier Registry, which is defined in [](#registry). The subdomain
 MUST follow the domain name conventions specified in {{RFC1034}}.
 
 It is RECOMMENDED that the first subdomain of "eap.arpa" use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
 (EAP) Registry, sub-registry "Method Types".  However, that registry does
 not follow the domain name conventions specified in {{RFC1034}}, so it
-is not possible to make a "one-to-one" mapping between the Method Type
+is not possible to mandate a "one-to-one" mapping between the Method Type
 name and the subdomain.
 
 Where it is not possible to make a direct mapping between the EAP
@@ -180,7 +189,7 @@ EAP peers to signal provisioning information.
 
 An EAP peer signals that it wishes a certain kind of
 provisioning by using a predefined NAI, along with an associated EAP
-method.  The meaning of the NAI, and behavior of the supplicant are
+method.  The meaning of the NAI, and behavior of the supplicant, are
 defined by a separate specification.  That specification will
 typically define both the NAI, and the EAP method or methods which are used for
 provisioning.
@@ -212,7 +221,9 @@ immediately try to gain network access using the new credentials, as
 soon as they have been provisioned.  That process allows errors to be
 quickly discovered and addressed.
 
-An EAP peer may have been provisioned with temporary credentials.
+An EAP peer may have been provisioned with temporary credentials
+or credentials that expire after some period of time (e.g., an X.509
+certificate with notAfter date set).
 It SHOULD therefore attempt to provision new credentials before the
 current set expires.  Unfortunately, any re-provisioning process with
 EAP will involve the device dropping off from the "full" network, in
@@ -225,9 +236,9 @@ additional discussion on this topic.
 
 An EAP session begins with the server receiving an initial
 EAP-Request/Identity message.  An EAP server supporting this
-specification MUST examining the identity to see if it uses the
-eap.arpa realm.  Identities in the eap.arpa realm are specific to
-provision.  Processing of all other identities is unchanged by this specificatipon.
+specification MUST examine the identity to see if it uses a realm located
+under eap.arpa.  Identities in the eap.arpa realm are specific to
+provisioning.  Processing of all other identities is unchanged by this specificatipon.
 
 If the server receives a malformed NAI in the eap.arpa domain, it MUST
 reply with an EAP Failure, as per {{RFC3748, Section 4.2}}.
@@ -235,10 +246,10 @@ Otherwise, the NAI is examined to determine which provisioning method
 is being requested by the peer.
 
 Tf the server does not recognize the NAI requested by the peer, it
-MUST reply with an EAP NAK of type zero (0).  This reply indicates
+MUST reply with an EAP Nak of type zero (0).  This reply indicates
 that the requested provisioning method is not available.  The server
-also MUST reply with a NAK of type zero (0) as per {{RFC3748, Section
-5.3.1}}, wif the peer proposes an EAP method which is not supported by
+also MUST reply with a Nak of type zero (0) as per {{RFC3748, Section
+5.3.1}}, if the peer proposes an EAP method which is not supported by
 the server, or is not recognized as being valid for that provisioning
 method.  The peer can then take any remedial action which it
 determines to be appropriate.
@@ -249,7 +260,7 @@ the NAI.  The EAP process then proceeds as per the EAP state machine
 outlined in {{RFC3748}}.
 
 Implementations MUST treat peers using a provisioning NAI as
-untrusted, and untrustworthy.  Once a peer is authenticated, it MUST
+untrusted, and untrustworthy.  Once such a peer is authenticated, it MUST
 be placed into a limited network, such as a captive portal.  The
 limited network MUST NOT permit general network access.
 Implementations should be aware of methods which bypass simple
@@ -279,7 +290,7 @@ Servers SHOULD rate-limit provisioning attempts.  A misbehaving peer
 can be blocked temporarily, or even permanently. Implementations
 SHOULD limit the total number of peers being provisioned at the same
 time.  We note that there is no requirement to allow all peers to
-connect without limit.  Instead, poeers are provisioned at the
+connect without limit.  Instead, peers are provisioned at the
 discretion of the network being accessed, which may permit or deny
 those devices based on reasons which are not explained to those
 devices.
@@ -295,14 +306,14 @@ networks.
 
 Implementations MUST NOT permit EAP method negotiation with
 provisioning credentials.  That is, when a provisioning NAI is used,
-any EAP NAK sent by a server MUST contain only EAP type zero (0).
+any EAP Nak sent by a server MUST contain only EAP type zero (0).
 Similarly, when an EAP peer uses a provisioning NAI and receives an
-EAP NAK, the contents MUST be ignored.
+EAP Nak, the contents MUST be ignored.
 
 While a server may support multiple provisioning methods, there is no
 way in EAP to negotiate which provisioning method can be used.  It is
 also expected that the provisioning methods will be specific to a
-particular type of device.  That is, a device is likely to support
+particular type of peer device.  That is, a given peer is likely to support
 only one provisioning method.
 
 As a result, there is no need to require a method for negotiating
@@ -341,7 +352,7 @@ could define provisioning endpoints such as Enrollment over Secure
 Transport (EST) {{?RFC7030}}, or Automatic Certificate Management
 Environment (ACME) {{?RFC8555}}.  The provisioning endpoints could be
 available both on the provisioning network, and on the provisioned
-(i.e. normal) network.  Such an architecture means that devices can be
+(i.e., normal) network.  Such an architecture means that devices can be
 re-provisioned without losing network access.
 
 ## Notes on AAA Routability
@@ -375,7 +386,7 @@ access, and take the appropriate steps to limit authorization.
 
 There appears to be no EAP peer or server implementations which
 support such access, since there is no defined way to perform any of
-the steps required.  i.e. to signal that this access is desired, and
+the steps required, i.e., to signal that this access is desired, and
 then limit access.
 
 Wi-Fi Alliance has defined an unauthenticated EAP-TLS method,
@@ -390,7 +401,7 @@ provisioning is done inside of the EAP-NOOB protocol.
 
 Tunnel Extensible Authentication Protocol (TEAP) {{RFC7170}} provides for provisioning via an unauthenticated TLS
 tunnel.  That document provides for a server unauthenticated
-provisioning mode, but the inner TLS exchange requires that both end
+provisioning mode, but the inner TLS exchange requires that both ends
 authenticate each other.  There are ways to provision a certificate,
 but the peer must still authenticate itself to the server with
 pre-existing credentials.
@@ -431,8 +442,8 @@ MUST be the provisioning identifier for both the inner identity, and
 any inner password.
 
 It is RECOMMENDED that provisioning be done via a TLS-based EAP methods.
-TLS provides for authentication of the EAP server, along with security
-and confidentiality of any provisioning data exchanged in the tunnel.
+TLS provides for authentication of the EAP server, along with integrity
+and confidentiality protection for any provisioning data exchanged in the tunnel.
 Similarly, if provisioning is done in a captive portal outside of EAP,
 EAP-TLS permits the EAP peer to run a full EAP authentication session
 while having nothing more than a few certificate authorities (CAs)
@@ -745,7 +756,7 @@ used to secure the provisioning network.  In summary:
 
 * allow only traffic which is needed for the current provisioning
   method.  All other traffic should be blocked.  Most notable, DNS has
-  been used to exfiltrate network traffic, so DNS recursors SHOULD NOT
+  been used to exfiltrate network traffic, so DNS recursive resolvers SHOULD NOT
   be made available on the provisioning network.
 
 * limit the services available on the provisioning network to only
