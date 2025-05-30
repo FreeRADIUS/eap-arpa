@@ -2,7 +2,7 @@
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
 docname: draft-ietf-emu-eap-arpa-06
-updates: 9140
+updates: 5216, 9140, 9190
 
 stand_alone: true
 ipr: trust200902
@@ -227,18 +227,18 @@ An EAP session begins with the server receiving an initial
 EAP-Request/Identity message.  An EAP server supporting this
 specification MUST examining the identity to see if it uses the
 eap.arpa realm.  Identities in the eap.arpa realm are specific to
-provision.  Processing of all other identities is unchanged by this specificatipon.
+provision.  Processing of all other identities is unchanged by this specification.
 
 If the server receives a malformed NAI in the eap.arpa domain, it MUST
 reply with an EAP Failure, as per {{RFC3748, Section 4.2}}.
 Otherwise, the NAI is examined to determine which provisioning method
 is being requested by the peer.
 
-Tf the server does not recognize the NAI requested by the peer, it
+If the server does not recognize the NAI requested by the peer, it
 MUST reply with an EAP NAK of type zero (0).  This reply indicates
 that the requested provisioning method is not available.  The server
 also MUST reply with a NAK of type zero (0) as per {{RFC3748, Section
-5.3.1}}, wif the peer proposes an EAP method which is not supported by
+5.3.1}}, if the peer proposes an EAP method which is not supported by
 the server, or is not recognized as being valid for that provisioning
 method.  The peer can then take any remedial action which it
 determines to be appropriate.
@@ -261,7 +261,7 @@ blocking only selected "bad" traffic results in substantial security
 failures.  As most provisioning methods permit unauthenticated devices
 to gain network access, these methods have a substantial potential for
 abuse by malicious actors.  As a result, the limited network needs to
-be designed assuming that it will be abused by malicious actoes.
+be designed assuming that it will be abused by malicious actoer.
 
 A limited network SHOULD also limit the duration of network access by
 devices being provisioned.  The provisioning process should be fairly
@@ -279,10 +279,18 @@ Servers SHOULD rate-limit provisioning attempts.  A misbehaving peer
 can be blocked temporarily, or even permanently. Implementations
 SHOULD limit the total number of peers being provisioned at the same
 time.  We note that there is no requirement to allow all peers to
-connect without limit.  Instead, poeers are provisioned at the
+connect without limit.  Instead, peers are provisioned at the
 discretion of the network being accessed, which may permit or deny
 those devices based on reasons which are not explained to those
 devices.
+
+Peers MUST rate-limit their provisioning attempts.  If provisioning
+fails, it is likely because provisioning is not available.  Retrying
+provisioning repeatedly in quick succession is not likely to change
+the server behavior.  Instead, it is likely to result in the peer
+being blocked.  The peer SHOULD retry provisioning no more than once
+every few minutes, and SHOULD perform exponential back-off on its
+provisioning attempts.
 
 Implementations SHOULD use functionality such as the RADIUS Filter-Id
 attribute ({{?RFC2865, Section 5.11}}) to set packet filters for the
@@ -296,8 +304,8 @@ networks.
 Implementations MUST NOT permit EAP method negotiation with
 provisioning credentials.  That is, when a provisioning NAI is used,
 any EAP NAK sent by a server MUST contain only EAP type zero (0).
-Similarly, when an EAP peer uses a provisioning NAI and receives an
-EAP NAK, the contents MUST be ignored.
+When an EAP peer uses a provisioning NAI and receives an EAP NAK, any
+EAP types given in that NAK MUST be ignored.
 
 While a server may support multiple provisioning methods, there is no
 way in EAP to negotiate which provisioning method can be used.  It is
@@ -459,11 +467,29 @@ total amount of time a device spends within the captive portal.
 Further details of the captive portal architecture can be found in
 {{RFC8952}}.
 
-The remaining question is how the EAP peer verifies the identity of
-the EAP server.  The device SHOULD ignore the EAP server certificate
-entirely, as the server's identity does not matter.  Any verification
-of systems can be done by the device after it obtains network access,
-such as HTTPS.
+All provisioning methods which are specified within the eap.arpa
+domain MUST define a way to authenticate the server.  This
+authentication can happen either at the EAP layer (as with EAP-TLS),
+or after network access has been granted (if credentials are
+provisioned over HTTPS).
+
+Where TLS-based EAP methods are used, implementations MUST still
+validate EAP server certificates in all situations other than
+provisioning.  Where the provisioning method under the "eap.arpa"
+domain defines that provisioning happen via another protocol such as
+with HTTPS, the EAP peer MAY skip validating the EAP server
+certificate.
+
+Whether or not the server certificate is ignored, the peer MUST treat
+the local network as untrusted.  {{RFC8952, Section 6.2}} has more
+discussion on this topic.
+
+The ability to not validate the EAP server certificates relaxes the
+requirements of {{RFC5216, Section 5.3}} which requires that the
+server certificate is always validated. .  For the provisioning case,
+it is acceptable in some cases to not validate the EAP server
+certificate, but only so long as there are other means to authenticate
+the data which is being provisioned.
 
 However, since the device likely is configured with web CAs
 (otherwise, the captive portal would also be unauthenticated),
@@ -491,7 +517,7 @@ It is RECOMMENDED that server implementations of Nimble out-of-band authenticati
 identities "noob@eap-noob.arpa" and "@noob.eap.arpa" as synonyms.
 
 It is RECOMMENDED that EAP-NOOB peers use "@noob.eap.arpa" first, and
-if that does not succeed, use "noob@eap-noob.arpa"
+if that does not succeed, use "noob@eap-noob.arpa".
 
 # IANA Considerations
 
@@ -592,10 +618,11 @@ Registry
 
 The following table gives the initial values for this table.
 
-NAI,Method-Type,Description,Reference
 
-@noob.eap.arpa,EAP-NOOB,{{RFC9140}} and THIS-DOCUMENT
-portal@tls.eap.arpa,EAP-TLS,{{RFC9190}} and THIS-DOCUMENT
+| NAI                 | Method-Type | Reference |
+| ------------------- | ----------- | --------- |
+| @noob.eap.arpa      | EAP-NOOB    | {{RFC9140}} and THIS-DOCUMENT |
+| portal@tls.eap.arpa | EAP-TLS     | {{RFC9190}} and THIS-DOCUMENT |
 
 ## Guidelines for Designated Experts {#guidelines}
 
@@ -679,7 +706,7 @@ defined in this registry also implicitly defines a subdomain "v.".
 Organizations can self-allocate in this space, under the "v."
 subdomain, e.g. "local@example.com.v.tls.eap.arpa".
 
-An organization which has registed a Fully Qualified Domain Name
+An organization which has registered a Fully Qualified Domain Name
 (FQDN) within the DNS can use that name within the "v." subdomain.
 
 # Privacy Considerations
@@ -740,7 +767,7 @@ to obtain network access, however limited.  As with any
 unauthenticated process, it can be abused.  Implementations should
 take care to limit the use of the provisioning network.
 
-Section [](#eap-servers) describes a number of methods which can be
+[](#eap-servers) describes a number of methods which can be
 used to secure the provisioning network.  In summary:
 
 * allow only traffic which is needed for the current provisioning
@@ -754,7 +781,7 @@ used to secure the provisioning network.  In summary:
 * limit the number of devices which can access the provisioning
   network at the same time.
 
-* for any one device, rate limit its' access the provisioning network.
+* for any one device, rate limit its access the provisioning network.
 
 * for a device which has accessed the provisioning network, limit the
   total amount of time which it is allowed to remain on the network
