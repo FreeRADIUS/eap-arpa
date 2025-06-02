@@ -521,10 +521,28 @@ if that does not succeed, use "noob@eap-noob.arpa".
 
 # IANA Considerations
 
-Three IANA actions are required.  The first two are registry updates
-for "eap.arpa".  The second is the creation of a new registry.
+A number IANA actions are required.  There are two registry updates in
+order to define "eap.arpa".  A new registry is created.  The
+"noob@eap-noob.arpa" registry entery is deprecated.
 
 ## .arpa updates
+
+There are two updates to the ".arpa" registry.
+
+IANA is also instructed to refuse further allocation requests which
+are directly within the ".arpa" registry for any functionality related
+to the EAP protocol.  Instead, new allocations related to EAP are to
+be made within the new "EAP Provisioning Identifiers" registry.
+
+### Deprecating eap-noob.arpa
+
+IANA is instructed to update the "eap-noob.arpa" entry as follows.
+
+The USAGE field is updated to add the word DEPRECATED.
+
+The REFERENCE field is updated to add a reference to THIS-DOCUMENT.
+
+### Defining eap.arpa
 
 IANA is instructed to update the ".ARPA Zone Management" registry with
 the following entry:
@@ -551,7 +569,7 @@ REFERENCE
 
 > THIS-DOCUMENT
 
-### Domain Name Reservation Considerations
+#### Domain Name Reservation Considerations
 
 This section answers the questions which are required by Section 5 of {{?RFC6761}}.  At a high level, these new domain names are used in certain situations in EAP.  The domain names are never seen by users, and they do not appear in any networking protocol other than EAP.
 
@@ -614,7 +632,7 @@ Registry
 >
 >> Reference where this identifier was defined.
 
-### Initial Values
+#### Initial Values
 
 The following table gives the initial values for this table.
 
@@ -804,8 +822,6 @@ Mohit Sethi provided valuable insight that using subdomains was better
 and more informative than the original method, which used only the
 utf8-username portion of the NAI.
 
-# Changelog
-
-* 00 - initial version
+The document was further improved with reviews from Ignes Robles.
 
 --- back
