@@ -134,7 +134,7 @@ The predefined provisioning NAIs defined by this specification use the
 particular, the subdomain under eap.arpa allows for different
 requested methods to be distinguished.  The subdomain in the realm
 field is assigned via the EAP Provisioning Identifier Registry, which
-is defined in [](#registry). The subdomain MUST follow the domain name conventions specified in {{RFC1034}}.
+is defined in [](#registry). The subdomain MUST follow the syntax defined in {{RFC7542, Section 2.2}}, which is a more restrictive subest of the domain name conventions specified in {{RFC1034}}.
 
 It is RECOMMENDED that the first subdomain of "eap.arpa" use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
