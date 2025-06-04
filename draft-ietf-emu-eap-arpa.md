@@ -91,6 +91,15 @@ are required, the password is defined to be the same as the identity.
 
 # Terminology
 
+EAP Provisioning Identifier (EPI)
+
+> The EAP Provisioning Identifier (EPI) is defined to be a strict
+> subset of the Network Access Identifier {{RFC7542}}.  The EPI is an
+> NAI which ends with "eap.arpa".  The domain or "realm" portion of
+> the NAI is defined in {{RFC7542, Section 2.2}}, which is a more
+> restrictive subset of the domain name conventions specified in
+> {{RFC1034}}.
+
 {::boilerplate bcp14}
 
 # Overview
@@ -132,12 +141,12 @@ the IAB has approved it.
 
 ## The realm field
 
-The predefined provisioning NAIs defined by this specification use the
+The NAIs defined by this specification use the
 {{RFC7542}} "realm" field to signal the behavior being requested; in
 particular, the subdomain under eap.arpa allows for different
 requested methods to be distinguished.  The subdomain in the realm
 field is assigned via the EAP Provisioning Identifier Registry, which
-is defined in [](#registry). The subdomain MUST follow the syntax defined in {{RFC7542, Section 2.2}}, which is a more restrictive subest of the domain name conventions specified in {{RFC1034}}.
+is defined in [](#registry). The subdomain MUST follow the syntax defined in {{RFC7542, Section 2.2}}, which is a more restrictive subset of the domain name conventions specified in {{RFC1034}}.
 
 It is RECOMMENDED that the first subdomain of "eap.arpa" use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
@@ -182,38 +191,39 @@ and the username field can be publicly visible.
 
 ## Operation
 
-Having defined the format and contents of NAIs in the eap.arpa realm,
-we now describe how those NAIs are used by EAP peers and
-EAP peers to signal provisioning information.
+Having described the format and contents of NAIs in the eap.arpa realm
+to define the EAP Provisioning Identifier (EPI), we now describe how
+those EPIs are used by EAP peers and EAP peers to signal provisioning
+information
 
 ### EAP Peer
 
 An EAP peer signals that it wishes a certain kind of
-provisioning by using a predefined NAI, along with an associated EAP
-method.  The meaning of the NAI, and behavior of the peer, are
+provisioning by using an EPI, along with an associated EAP
+method.  The meaning of the EPI, and behavior of the peer, are
 defined by a separate specification.  That specification will
-typically define both the NAI, and the EAP method or methods which are used for
+typically define both the EPI, and the EAP method or methods which are used for
 provisioning.
 
-The NAI used by the peer MUST be taken from an entry in the "EAP
+The EPI used by the peer MUST be taken from an entry in the "EAP
 Provisioning Identifiers" registry, and the EAP method used with that
 NAI MUST match the corresponding EAP method from that same entry.
 
 Where an EAP peer allows local selection of a provisioning method, the
-choice of NAI is defined by the provisioning method.  As a result, the
-EAP peer MUST NOT have a field which lets the NAI be configured
-directly.  Instead the user (or some other process) chooses a
-provisioning method, and the peer then chooses a predefined NAI which
-matches that provisioning method.
+choice of EPI is defined by the provisioning method.  As a result, the
+EAP peer MUST NOT have a field which lets the user identifier field be
+configured directly.  Instead the user (or some other process) chooses
+a provisioning method, and the peer then chooses an EPI
+which matches that provisioning method.
 
-While EAP peers allow users to enter NAIs directly for existing EAP
-methods, they SHOULD NOT check for provisioning NAIs.  Any user who
-enters a provisioning NAI will either get rejected because the server
+While EAP peers allow users to enter user identifiers directly for existing EAP
+methods, they SHOULD NOT check whether those identfiers match any EPI.  Any user who
+enters an identifier which matches an EPI will either get rejected because the server
 does not support provisioning, or the user will be placed into a
 captive portal.  There is no security or privacy issues with a user
-manually entering a provisioning NAI.
+manually entering an EPI as the user identifier.
 
-When all goes well, running EAP with the provisioning NAI results in
+When all goes well, running EAP with the EPI results in
 new authentication credentials being provisioned.  The peer then drops
 its network connection, and re-authenticates using the newly
 provisioned credentials.  The user MAY be involved in this process,
@@ -249,15 +259,14 @@ additional discussion on this topic.
 An EAP session begins with the server receiving an initial
 EAP-Request/Identity message.  An EAP server supporting this
 specification MUST examine the identity to see if it uses a realm located under
-eap.arpa.  Identities in the eap.arpa realm are specific to
-provisioning.  Processing of all other identities is unchanged by this specification.
+eap.arpa.  If so, the identity is an EPI.  Processing of all other identities is unchanged by this specification.
 
-If the server receives a malformed NAI in the eap.arpa domain, it MUST
+If the server receives a malformed EPI, it MUST
 reply with an EAP Failure, as per {{RFC3748, Section 4.2}}.
-Otherwise, the NAI is examined to determine which provisioning method
+Otherwise, the EPI is examined to determine which provisioning method
 is being requested by the peer.
 
-If the server does not recognize the NAI requested by the peer, it
+If the server does not recognize the EPI requested by the peer, it
 MUST reply with an EAP Nak of type zero (0).  This reply indicates
 that the requested provisioning method is not available.  The server
 also MUST reply with a Nak of type zero (0) as per {{RFC3748, Section
@@ -267,11 +276,10 @@ method.  The peer can then take any remedial action which it
 determines to be appropriate.
 
 Once the server accepts the provisioning method, it then replies with
-an EAP method which MUST match the one proposed by the peer in
-the NAI.  The EAP process then proceeds as per the EAP state machine
+an EAP method which MUST match the one associated with the EPI.  The EAP process then proceeds as per the EAP state machine
 outlined in {{RFC3748}}.
 
-Implementations MUST treat peers using a provisioning NAI as
+Implementations MUST treat peers using an EPI as
 untrusted, and untrustworthy.  Once such a peer is authenticated, it MUST
 be placed into a limited network, such as a captive portal.  The
 limited network MUST NOT permit general network access.
@@ -318,16 +326,16 @@ provisioning attempts.
 Implementations SHOULD use functionality such as the RADIUS Filter-Id
 attribute ({{?RFC2865, Section 5.11}}) to set packet filters for the
 peer being provisioned.  For ease of administration, the Filter-Id
-name could simply be the provisioning NAI, or a similar name.  Such
+name could simply be the EPI, or a similar name.  Such
 consistency aids with operational considerations when managing complex
 networks.
 
 ## Other Considerations
 
 Implementations MUST NOT permit EAP method negotiation with
-provisioning credentials.  That is, when a provisioning NAI is used,
+provisioning credentials.  That is, when an EPI is used,
 any EAP Nak sent by a server MUST contain only EAP method zero (0).
-When an EAP peer uses a provisioning NAI and receives an EAP Nak, any
+When an EAP peer uses an EPI and receives an EAP Nak, any
 EAP methods given in that Nak MUST be ignored.
 
 While a server may support multiple provisioning methods, there is no
@@ -526,8 +534,8 @@ other than to say that it is technically possible.
 
 It is also possible to use TLS-PSK instead of certificates for
 TLS-based EAP methods.  In which case, the Pre-Shared Key (PSK)
-identity MUST the same as the NAI in the EAP Identifier, and the PSK
-MUST be the provisioning identifier.
+identity MUST the same as the EPI in the EAP Identifier, and the PSK
+MUST also be the EPO.
 
 ## EAP-NOOB
 
