@@ -740,7 +740,7 @@ justified by an explanation, and in the cases where it is possible,
 concrete suggestions on how the request can be modified so as to
 become acceptable should be provided.
 
-## Organization Self Assignment {#vendor-domain}
+## Organization Self Assignment {#vendor-assignment}
 
 This registry allows organizations to request allocations from this
 registry, but explicit allocations are not always required.  Any NAI
