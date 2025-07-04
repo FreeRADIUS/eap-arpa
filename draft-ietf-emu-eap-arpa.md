@@ -233,7 +233,7 @@ gaining network access using the provisioned credentials.
 There are a number of ways in which provisioning can fail.  One way is
 when the server does not implement the provisioning method.  EAP peers
 therefore MUST track which provisioning methods have been tried, and
-not repeat the same method to the same EAP server when receiving a an
+not repeat the same method to the same EAP server when receiving an
 EAP Nak.  EAP peers MUST rate limit attempts at provisioning, in order
 to avoid overloading the server.  This rate limiting SHOULD include
 jitter and exponential backoff.
@@ -535,7 +535,7 @@ other than to say that it is technically possible.
 It is also possible to use TLS-PSK instead of certificates for
 TLS-based EAP methods.  In which case, the Pre-Shared Key (PSK)
 identity MUST the same as the EPI in the EAP Identifier, and the PSK
-MUST also be the EPO.
+MUST also be the EPI.
 
 ## EAP-NOOB
 
@@ -549,7 +549,7 @@ if that does not succeed, use "noob@eap-noob.arpa".
 
 A number IANA actions are required.  There are two registry updates in
 order to define "eap.arpa".  A new registry is created.  The
-"noob@eap-noob.arpa" registry entery is deprecated.
+"noob@eap-noob.arpa" registry entry is deprecated.
 
 ## .arpa updates
 
