@@ -595,7 +595,7 @@ DOMAIN
 
 USAGE
 
-> For provisioning within the Extensible Authentication Protocol framework. 
+> For provisioning within the Extensible Authentication Protocol framework.
 
 REFERENCE
 
@@ -615,29 +615,29 @@ REFERENCE
 
 This section answers the questions which are required by Section 5 of {{?RFC6761}}.  At a high level, these new domain names are used in certain situations in EAP.  The domain names are never seen by users, and they do not appear in any networking protocol other than EAP.
 
-1. Users:  
+1. Users:
 User are not expected to recognize these names as special or use them differently from other domain names.  The use of these names in EAP is invisible to end users.
 
-2. Application Software:  
-EAP servers and clients are expected to make their software recognize these names as special and treat them differently.  This document discusses that behavior.  
-EAP peers should recognize these names as special, and should refuse to allow users to enter them in any interface.  
+2. Application Software:
+EAP servers and clients are expected to make their software recognize these names as special and treat them differently.  This document discusses that behavior.
+EAP peers should recognize these names as special, and should refuse to allow users to enter them in any interface.
 EAP servers and RADIUS servers should recognize the "eap.arpa" domain as special, and refuse to do dynamic discovery ({{?RFC7585}}) for it.
 
-3. Name Resolution APIs and Libraries:  
+3. Name Resolution APIs and Libraries:
 Writers of these APIs and libraries are not expected to recognize these names or treat them differently.
 
-4. Caching DNS Servers:  
+4. Caching DNS Servers:
 Writers of caching DNS servers are not expected to recognize these names or treat them differently.
 
-5. Authoritative DNS Servers:  
+5. Authoritative DNS Servers:
 Writers of authoritative DNS servers are not expected to recognize these names or treat them differently.
 
-6.  DNS Server Operators:  
-These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.\\
-Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.  
+6.  DNS Server Operators:
+These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.
+Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.
 If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
 
-7. DNS Registries/Registrars:  
+7. DNS Registries/Registrars:
 DNS Registries/Registrars should deny requests to register this reserved domain name.
 
 ## EAP Provisioning Identifiers Registry {#registry}
