@@ -1,7 +1,7 @@
 ---
 title: The eap.arpa domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-07
+docname: draft-ietf-emu-eap-arpa-08
 updates: 5216, 9140, 9190
 
 stand_alone: true
@@ -238,6 +238,15 @@ EAP Nak.  EAP peers MUST rate limit attempts at provisioning, in order
 to avoid overloading the server.  This rate limiting SHOULD include
 jitter and exponential backoff.
 
+Since there is no way to signal whether the failed provisioning is due
+to a transient failure on the EAP server, or whether it is due to the
+EAP server not supporting that provisioning method, EAP peers SHOULD
+err on the side of long delays between retrying the same provisioning
+method to an EAP server.  EAP peers MAY retry a given provisioning
+method after a sufficiently long interval that the EAP server might
+have implemented the provisioning method, e.g., at least a day, and
+perhaps no more than a month.
+
 Another way for the provisioning method to fail is when the new
 credentials do not result in network access.  It is RECOMMENDED that
 when peers are provisioned with credentials, that they immediately try
@@ -452,7 +461,7 @@ possible to define a captive portal where provisioning can be done.
 As a result, we need to be able to perform provisioning via EAP, and
 not via some IP protocol.
 
-# Interaction with existing EAP Methods
+# Interaction with EAP Methods
 
 As the provisioning identifier is used within EAP, it necessarily has
 interactions with, and effects on, the various EAP methods.  This
@@ -468,7 +477,7 @@ are few reasons to define a method-specific password.
 This requirement also applies to TLS-based EAP methods such as EAP Tunneled Transport Layer Security (EAP-TTLS)
 and Protected Extensible Authentication Protocol (PEAP).  Where the TLS-based EAP method provides for an inner
 identity and inner authentication method, the credentials used there
-MUST be the provisioning identifier for both the inner identity, and
+SHOULD be the provisioning identifier for both the inner identity, and
 any inner password.
 
 It is RECOMMENDED that provisioning be done via a TLS-based EAP methods.
@@ -479,32 +488,13 @@ EAP-TLS permits the EAP peer to run a full EAP authentication session
 while having nothing more than a few certificate authorities (CAs)
 locally configured.
 
-## EAP-TLS
-
-This document defines an identifier "portal@tls.eap.arpa", which is
-the first step towards enabling unauthenticated client provisioning
-in EAP-TLS.  The purpose of the identifier is to allow EAP peers to
-signal EAP servers that they wish to obtain a "captive portal" style
-network access.
-
-This identifier signals the EAP server that the peer wishes to obtain
-"peer unauthenticated access" as per {{RFC5216,  Section 2.1.1}} and
-{{RFC9190}}.
-
-An EAP server which agrees to authenticate this request MUST ensure
-that the device is placed into a captive portal with limited network
-access.  Implementations SHOULD limit both the total amount of data
-transferred by devices in the captive portal, and SHOULD also limit the
-total amount of time a device spends within the captive portal.
-
-Further details of the captive portal architecture can be found in
-{{RFC8952}}.
+## High Level Requirements
 
 All provisioning methods which are specified within the eap.arpa
 domain MUST define a way to authenticate the server.  This
-authentication can happen either at the EAP layer (as with EAP-TLS),
-or after network access has been granted (if credentials are
-provisioned over HTTPS).
+authentication can happen either at the EAP layer (as with TLS-based
+EAP methods), or after network access has been granted (if credentials
+are provisioned over HTTPS).
 
 Where TLS-based EAP methods are used, implementations MUST still
 validate EAP server certificates in all situations other than
@@ -532,10 +522,36 @@ of this topic is better suited for the specification(s) which define a
 particular provisioning method.  We do not discuss it here further,
 other than to say that it is technically possible.
 
-It is also possible to use TLS-PSK instead of certificates for
-TLS-based EAP methods.  In which case, the Pre-Shared Key (PSK)
-identity MUST the same as the EPI in the EAP Identifier, and the PSK
-MUST also be the EPI.
+## EAP-TLS
+
+This document defines an identifier "portal@tls.eap.arpa", which
+allows EAP peers to use unauthenticated EAP-TLS.  The purpose of the
+identifier is to allow EAP peers to signal EAP servers that they wish
+to obtain a "captive portal" style network access.
+
+This identifier signals the EAP server that the peer wishes to obtain
+"peer unauthenticated access" as per {{RFC5216, Section 2.1.1}} and
+{{RFC9190}}.  Note that peer unauthenticated access MUST provide for
+authentication of the EAP server, such as with a server certificate.
+Using TLS-PSK with a well-known PSK value is generally not
+appropriate, as it would not provide server authentication.
+
+An EAP server which agrees to authenticate this request MUST ensure
+that the device is placed into a captive portal with limited network
+access.  Implementations SHOULD limit both the total amount of data
+transferred by devices in the captive portal, and SHOULD also limit the
+total amount of time a device spends within the captive portal.
+
+This method is an improvement over existing captive portals, which are
+typically completely unsecured and unauthenticated.  Using peer
+unauthenticated TLS for network access ensures that the EAP server is
+proven to be authentic.  The use of 802.1X ensures that the link
+between the EAP peer and EAP authenticator (e.g. access point) is also
+secured.
+
+Further details of the captive portal architecture can be found in
+{{RFC8952}}.  The captive portal can advertise support for the
+"eap.arpa" domain via an 802.11u NAI realm.
 
 ## EAP-NOOB
 
@@ -861,6 +877,7 @@ Mohit Sethi provided valuable insight that using subdomains was better
 and more informative than the original method, which used only the
 utf8-username portion of the NAI.
 
-The document was further improved with reviews from Ignes Robles and Ben Kaduk.
+The document was further improved with reviews from Ignes Robles and
+Ben Kaduk.
 
 --- back
