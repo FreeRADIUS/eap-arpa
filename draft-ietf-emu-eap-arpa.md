@@ -779,7 +779,8 @@ suggesting that organizations using self-assigned realms do not allow
 their DNS registrations to expire.
 
 It is therefore RECOMMENDED that organizations avoid the use of
-self-assigned realms.  Organizations MAY use self-assigned realms only
+self-assigned realms in code that is released.
+Organizations MAY use self-assigned realms only
 when no other alternative exists, and when the organization expects to
 maintain operation for at least the lifetime of the devices which use
 these realms.
