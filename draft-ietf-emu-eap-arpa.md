@@ -1,7 +1,7 @@
 ---
-title: The eap.arpa domain and EAP provisioning
+title: The eap.arpa. domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-08
+docname: draft-ietf-emu-eap-arpa-09
 updates: 5216, 9140, 9190
 
 stand_alone: true
@@ -22,7 +22,7 @@ author:
 - ins: A. DeKok
   name: Alan DeKok
   org: InkBridge Networks
-  email: aland@inkbridgenetworks.com
+  email: alan.dekok@inkbridge.io
 
 normative:
   RFC8174:
@@ -43,6 +43,25 @@ informative:
   RFC7170:
   RFC8952:
   RFC9190:
+  ARPAREG:
+     title: ".ARPA Zone Management"
+     author:
+       name: IANA
+     format:
+       TXT: https://www.iana.org/domains/arpa
+  EAPREG:
+     title: "Extensible Authentication Protocol (EAP) Registry"
+     author:
+       name: IANA
+     format:
+       TXT: https://www.iana.org/assignments/eap-numbers/eap-numbers.xhtml
+  CAB:
+     title: "CA/Browser Forum"
+     author:
+       name: CA/Browser Forum
+     format:
+       TXT: https://cabforum.org/
+
 
 venue:
   group: EMU
@@ -51,16 +70,18 @@ venue:
 
 --- abstract
 
-This document defines the eap.arpa domain for use only in Network Access Identifiers (NAIs) as a way for Extensible Authentication Protocol (EAP) peers to
+This document defines the eap.arpa. domain for use only in Network Access Identifiers (NAIs) as a way for Extensible Authentication Protocol (EAP) peers to
 signal to EAP servers that they wish to obtain limited, and
 unauthenticated, network access.  EAP peers signal which kind of access is required via certain predefined identifiers which use the Network Access Identifier (NAI) format of RFC 7542.  A table of
 identifiers and meanings is defined, which includes entries for RFC 9140.
+
+This document updates RFC5216 and RFC9190 to define an unauthenticated provisioning method.  Those specifications suggested that such a method has possible, but they did not define how it would be done.  This document also updates RFC9140 to deprecate "eap-noob.arpa", and replace it with "noob@eap.arpa"
 
 --- middle
 
 # Introduction
 
-In most uses, EAP {{RFC3748}} requires that the EAP peer have
+In most uses, EAP {{RFC3748}} requires that the EAP peers have
 pre-provisioned credentials.  Without credentials, the device cannot
 obtain network access in order to be provisioned with credentials.
 This limitation creates a bootstrapping problem.
@@ -99,6 +120,13 @@ EAP Provisioning Identifier (EPI)
 > the NAI is defined in {{RFC7542, Section 2.2}}, which is a more
 > restrictive subset of the domain name conventions specified in
 > {{RFC1034}}.
+>
+> Readers of this document should note that the NAI is different from
+> a domain name.  The NAIs defined by this specification end with the
+> realm "eap.arpa", which does not include a trailing ".".  However,
+> this specification often refers to the domain name "eap.arpa.",
+> which includes a trailing "." for consistency with other DNS
+> terminology.
 
 {::boilerplate bcp14}
 
@@ -118,23 +146,23 @@ defined in {{RFC7542, Section 3}}.  The realm also needs to be one
 which does not return results for {{?RFC7585}} dynamic discovery.
 
 This specification does not, however, forbid routing of packets for
-realms in the "eap.arpa" domain.  Instead, it leaves such routing up
+NAIs in the eap.arpa realm.  Instead, it leaves such routing up
 to individual organizations.
 
-We note that this specification is fully compatible with all known
+This specification is fully compatible with all known
 EAP implementations, so it is fail-safe.  When presented with a peer
 wishing to use this specification, existing implementations will
 return EAP Failure, and will not otherwise misbehave.
 
 ## The eap.arpa realm
 
-This document defines the "eap.arpa" domain as being used for
+This document defines the eap.arpa realm as being used for
 provisioning within EAP.  A similar domain has previously been used
 for EAP-NOOB {{RFC9140}}, as "eap-noob.arpa".  This document extends
 that concept, and standardizes the practices surrounding it,
 
 NOTE: the "arpa" domain is controlled by the IAB.  Allocation of
-"eap.arpa" requires agreement from the IAB.
+the eap.arpa. domain name requires agreement from the IAB.
 
 RFC-EDITOR: This text can be updated on publication to indicate that
 the IAB has approved it.
@@ -143,12 +171,12 @@ the IAB has approved it.
 
 The NAIs defined by this specification use the
 {{RFC7542}} "realm" field to signal the behavior being requested; in
-particular, the subdomain under eap.arpa allows for different
+particular, the subdomain under the eap.arpa. domain allows for different
 requested methods to be distinguished.  The subdomain in the realm
-field is assigned via the EAP Provisioning Identifier Registry, which
+field is assigned via the EAP Provisioning Identifier Registry {{EAPREG}}, which
 is defined in [](#registry). The subdomain MUST follow the syntax defined in {{RFC7542, Section 2.2}}, which is a more restrictive subset of the domain name conventions specified in {{RFC1034}}.
 
-It is RECOMMENDED that the first subdomain of "eap.arpa" use the EAP
+The first subdomain of the eap.arpa. domain SHOULD use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
 (EAP) Registry, sub-registry "Method Types".  However, that registry does
 not follow the domain name conventions specified in {{RFC1034}}, so it
@@ -156,7 +184,7 @@ is not possible to make a "one-to-one" mapping between the Method Type
 name and the subdomain.
 
 Where it is not possible to make a direct mapping between the EAP
-Method Type name due to the EAP Method Type name not matching the {{RFC7542, Section 2.2}} format, the name used in the realm registry SHOULD be
+Method Type name due to the EAP Method Type name not matching the {{RFC7542, Section 2.2}} format, the name used in the realm registry MUST be
 similar enough to allow the average reader to understand which EAP
 Method Type is being used.
 
@@ -166,11 +194,18 @@ a delegated range of identifiers which do not conflict with other
 identifiers.
 
 Any realm defined in this registry (e.g. "tls.eap.arpa") also
-implicitly defines a subdomain "v." (e.g. "v.tls.eap.arpa").  Vendors
-or SDOs can self-allocate within the "v." subdomain, using domains
-which they own.  For example, An "example.com" company could
-self-allocate and use the realm "example.com.v.tls.eap.arpa".  See
-[](#vendor-assignment) for more discussion of this topic.
+implicitly defines a sub-realm "v." (e.g. "v.tls.eap.arpa").  Vendors
+or SDOs can self-allocate within the "v." realm, using realms that
+they own.  For example, a company that owns the "example.com." domain
+could self-allocate and use the realm "example.com.v.tls.eap.arpa".
+See [](#vendor-assignment) for more discussion of this topic.
+
+This specification does not make any provisions for private-use
+realms.  The "v." sub-realm is sufficient for all private uses.
+
+For experimental uses, it is RECOMMENDED that the "ietf.org" realm is
+used.  Different uses SHOULD be distinguished by using the name of a
+working group or document, such as "emu.ietf.org.v.eap.arpa".
 
 ## The username field
 
@@ -270,8 +305,8 @@ EAP-Request/Identity message.  An EAP server supporting this
 specification MUST examine the identity to see if it uses a realm located under
 eap.arpa.  If so, the identity is an EPI.  Processing of all other identities is unchanged by this specification.
 
-If the server receives a malformed EPI, it MUST
-reply with an EAP Failure, as per {{RFC3748, Section 4.2}}.
+If the server receives an EPI which is malformed, it MUST
+reply with an EAP Failure, as per {{RFC3748, Section 4.2}}.  For example, an NAI may end with the eap.arpa realm, but may also contain data which is not permitted by the {{RFC7542}} format.
 Otherwise, the EPI is examined to determine which provisioning method
 is being requested by the peer.
 
@@ -318,7 +353,7 @@ similarly does not need access to a large number of services.
 Servers SHOULD rate-limit provisioning attempts.  A misbehaving peer
 can be blocked temporarily, or even permanently. Implementations
 SHOULD limit the total number of peers being provisioned at the same
-time.  We note that there is no requirement to allow all peers to
+time.  There is no requirement for RADIUS servers to allow all peers to
 connect without limit.  Instead, peers are provisioned at the
 discretion of the network being accessed, which may permit or deny
 those devices based on reasons which are not explained to those
@@ -333,11 +368,16 @@ every few minutes, and SHOULD perform exponential back-off on its
 provisioning attempts.
 
 Implementations SHOULD use functionality such as the RADIUS Filter-Id
-attribute ({{?RFC2865, Section 5.11}}) to set packet filters for the
-peer being provisioned.  For ease of administration, the Filter-Id
-name could simply be the EPI, or a similar name.  Such
-consistency aids with operational considerations when managing complex
-networks.
+attribute ({{?RFC2865, Section 5.11}}) to limit network access for the
+peer being provisioned, as discussed above in [](#eap-servers).  For
+ease of administration, the Filter-Id name could simply be the EPI, or
+a similar name.  Such consistency aids with operational considerations
+when managing complex networks.
+
+Implementations MUST prevent peers in the limited network from
+communicating with each other.  There is no reason for a system that
+is being provisioned to communicate with anything other than the
+provisioning server(s).
 
 ## Other Considerations
 
@@ -374,7 +414,7 @@ publishing the specification.
 
 ### Renewal of Credentials
 
-Where a provisioning method is expected to create credentials which do
+Where a provisioning method is expected to create credentials that do
 not expire, the specification SHOULD state this explicitly.
 
 Where credentials expire, it is RECOMMENDED that specifications
@@ -394,16 +434,16 @@ re-provisioned without losing network access.
 
 ## Notes on AAA Routability
 
-When we say that the eap.arpa domain is not routable in an AAA proxy
-framework, we mean that the domain does not exist, and will never
-resolve to anything for dynamic discovery as defined in {{?RFC7585}}.
+When we say that the eap.arpa realm is not routable in an AAA proxy
+framework, we mean that the eap.arpa. domain does not exist, and that it will never
+be resolvable for {{?RFC7585}} dynamic discovery.
 In addition, administrators will not have statically configured AAA
 proxy routes for this domain.  Where routes are added for this domain,
 they will generally be used to implement this specification.
 
 In order to avoid spurious DNS lookups, RADIUS servers supporting
 {{?RFC7585}} SHOULD perform filtering in the domains which are sent to
-DNS.  Specifically, names in the "eap.arpa" domain SHOULD NOT be
+DNS.  Specifically, names in the eap.arpa. domain MUST NOT be
 looked up in DNS.
 
 # Background and Rationale
@@ -490,7 +530,7 @@ locally configured.
 
 ## High Level Requirements
 
-All provisioning methods which are specified within the eap.arpa
+All provisioning methods which are specified within the eap.arpa.
 domain MUST define a way to authenticate the server.  This
 authentication can happen either at the EAP layer (as with TLS-based
 EAP methods), or after network access has been granted (if credentials
@@ -498,7 +538,7 @@ are provisioned over HTTPS).
 
 Where TLS-based EAP methods are used, implementations MUST still
 validate EAP server certificates in all situations other than
-provisioning.  Where the provisioning method under the "eap.arpa"
+provisioning.  Where the provisioning method under the eap.arpa.
 domain defines that provisioning happen via another protocol such as
 with HTTPS, the EAP peer MAY skip validating the EAP server
 certificate.
@@ -514,17 +554,17 @@ it is acceptable in some cases to not validate the EAP server
 certificate, but only so long as there are other means to authenticate
 the data which is being provisioned.
 
-However, since the device likely is configured with web CAs
+However, since the device likely is configured with CAs for the web issued by {{CAB}},
 (otherwise, the captive portal would also be unauthenticated),
 provisioning methods could use those CAs within an EAP method in order
 to allow the peer to authenticate the EAP server.  Further discussion
 of this topic is better suited for the specification(s) which define a
-particular provisioning method.  We do not discuss it here further,
+particular provisioning method.  This issue is not discussed further here,
 other than to say that it is technically possible.
 
 ## EAP-TLS
 
-This document defines an identifier "portal@tls.eap.arpa", which
+This document defines an NAI "portal@tls.eap.arpa", which
 allows EAP peers to use unauthenticated EAP-TLS.  The purpose of the
 identifier is to allow EAP peers to signal EAP servers that they wish
 to obtain a "captive portal" style network access.
@@ -538,9 +578,7 @@ appropriate, as it would not provide server authentication.
 
 An EAP server which agrees to authenticate this request MUST ensure
 that the device is placed into a captive portal with limited network
-access.  Implementations SHOULD limit both the total amount of data
-transferred by devices in the captive portal, and SHOULD also limit the
-total amount of time a device spends within the captive portal.
+access as discussed above in [](#eap-servers).
 
 This method is an improvement over existing captive portals, which are
 typically completely unsecured and unauthenticated.  Using peer
@@ -551,7 +589,7 @@ secured.
 
 Further details of the captive portal architecture can be found in
 {{RFC8952}}.  The captive portal can advertise support for the
-"eap.arpa" domain via an 802.11u NAI realm.
+eap.arpa. domain via an 802.11u NAI realm.
 
 ## EAP-NOOB
 
@@ -564,7 +602,7 @@ if that does not succeed, use "noob@eap-noob.arpa".
 # IANA Considerations
 
 A number IANA actions are required.  There are two registry updates in
-order to define "eap.arpa".  A new registry is created.  The
+order to define the eap.arpa. domain.  A new registry is created.  The
 "noob@eap-noob.arpa" registry entry is deprecated.
 
 ## .arpa updates
@@ -584,9 +622,9 @@ The USAGE field is updated to add the word DEPRECATED.
 
 The REFERENCE field is updated to add a reference to THIS-DOCUMENT.
 
-### Defining eap.arpa
+### Defining the eap.arpa. Domain
 
-IANA is instructed to update the ".ARPA Zone Management" registry with
+IANA is instructed to update the ".ARPA Zone Management" registry {{ARPAREG}} with
 the following entry:
 
 DOMAIN
@@ -621,7 +659,7 @@ User are not expected to recognize these names as special or use them differentl
 2. Application Software:
 EAP servers and clients are expected to make their software recognize these names as special and treat them differently.  This document discusses that behavior.
 EAP peers should recognize these names as special, and should refuse to allow users to enter them in any interface.
-EAP servers and RADIUS servers should recognize the "eap.arpa" domain as special, and refuse to do dynamic discovery ({{?RFC7585}}) for it.
+EAP servers and RADIUS servers should recognize the eap.arpa. domain as special, and refuse to do dynamic discovery ({{?RFC7585}}) for it.
 
 3. Name Resolution APIs and Libraries:
 Writers of these APIs and libraries are not expected to recognize these names or treat them differently.
@@ -633,8 +671,9 @@ Writers of caching DNS servers are not expected to recognize these names or trea
 Writers of authoritative DNS servers are not expected to recognize these names or treat them differently.
 
 6.  DNS Server Operators:
-These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.
-Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the "eap.arpa" domain, DNS servers SHOULD return an NXDOMAIN error.
+These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.\\
+Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the eap.arpa. domain, DNS servers SHOULD return an NXDOMAIN error.
+
 If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
 
 7. DNS Registries/Registrars:
@@ -698,7 +737,7 @@ NAI SHOULD be of the form "action@foo.eap.arpa".
 
 The NAI MUST satisfy the requirements of the {{RFC7542, Section 2.2}}
 format.  The utf8-username portion MAY be empty.  The utf8-username
-portion MUST NOT be "anonymous".  The NAI MUST end with "eap.arpa".
+portion MUST NOT be "anonymous".  The NAI MUST end with the eap.arpa realm.
 NAIs with any "v." subdomain MUST NOT be registered, in order to
 preserve the functionality of that subdomain.
 
@@ -844,7 +883,7 @@ policies can be applied.
 
 ## Provisioning is Unauthenticated
 
-We note that this specification allows for unauthenticated EAP peers
+This specification allows for unauthenticated EAP peers
 to obtain network access, however limited.  As with any
 unauthenticated process, it can be abused.  Implementations should
 take care to limit the use of the provisioning network.
