@@ -25,7 +25,7 @@ author:
   email: alan.dekok@inkbridge.io
 
 normative:
-  RFC1034:
+  STD13:
   RFC8174:
   RFC3748:
   RFC5216:
@@ -76,7 +76,7 @@ signal to EAP servers that they wish to obtain limited, and
 unauthenticated, network access.  EAP peers signal which kind of access is required via certain predefined identifiers which use the Network Access Identifier (NAI) format of RFC 7542.  A table of
 identifiers and meanings is defined, which includes entries for RFC 9140.
 
-This document updates RFC5216 and RFC9190 to define an unauthenticated provisioning method.  Those specifications suggested that such a method has possible, but they did not define how it would be done.  This document also updates RFC9140 to deprecate "eap-noob.arpa", and replace it with "noob@eap.arpa"
+This document updates RFC5216 and RFC9190 to define an unauthenticated provisioning method.  Those specifications suggested that such a method has possible, but they did not define how it would be done.  This document also updates RFC9140 to deprecate "eap-noob.arpa", and replace it with "@noob.eap.arpa"
 
 --- middle
 
@@ -175,7 +175,7 @@ EAP Provisioning Identifier
 > NAI which is a subdomain of "eap.arpa".  The "realm" portion of
 > the NAI is defined in {{RFC7542, Section 2.2}}, which is a more
 > restrictive subset of the domain name conventions specified in
-> {{RFC1034}}.
+> {{STD13}}.
 >
 > Readers of this document should note that the realm portion of the
 > NAI is different from a domain name.  In addition to the character
@@ -244,12 +244,12 @@ The NAIs defined by this specification use the
 particular, the subdomain under the eap.arpa. domain allows for different
 requested methods to be distinguished.  The subdomain in the realm
 field is assigned via the EAP Provisioning Identifier Registry {{EAPREG}}, which
-is defined in [](#registry). The subdomain MUST follow the syntax defined in {{RFC7542, Section 2.2}}, which is a more restrictive subset of the domain name conventions specified in {{RFC1034}}.
+is defined in [](#registry). The subdomain MUST follow the syntax defined in {{RFC7542, Section 2.2}}, which is a more restrictive subset of the domain name conventions specified in {{STD13}}.
 
 Where possible, the first subdomain of the eap.arpa. domain SHOULD use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
 (EAP) Registry group, "Method Types" registry.  However, the EAP registry does
-not follow the domain name conventions specified in {{RFC1034}}, so it
+not follow the domain name conventions specified in {{STD13}}, so it
 is not always possible to make a "one-to-one" mapping between the Method Type
 name and a subdomain of the eap.arpa. domain.
 
@@ -282,7 +282,7 @@ by using the name of a working group or document, such as
 
 The username field is dependent on the EAP method being used for
 provisioning. For example, {{RFC9140}} uses the username "noob". Other
-EAP methods MAY omit the username as RECOMMENDED in {{RFC7542}}.  The
+EAP methods MAY omit the username as recommended in {{RFC7542}}.  The
 username of "anonymous" is NOT RECOMMENDED for specifications using
 this format, even though it is permitted by {{RFC7542}}.  The name
 "anonymous" is widely used in NAIs today, and we wish to avoid
@@ -316,14 +316,14 @@ Provisioning Identifiers" registry, and the EAP method used with that
 NAI MUST match the corresponding EAP method from that same entry.
 
 Where an EAP peer allows local selection of a provisioning method, the
-choice of EPI is defined by the provisioning method.  As a result, the
-EAP peer MUST NOT have a field which lets the user identifier field be
+EPI is defined by the provisioning method and not by the end user.  As a result, when a provisioning method is being selected, the
+EAP peer MUST NOT have a configuration interface which lets the EAP user identifier field be
 configured directly.  Instead the user (or some other process) chooses
-a provisioning method, and the peer then chooses an EPI
+a provisioning method, and the EAP peer then selects the EPI
 which matches that provisioning method.
 
 While EAP peers allow users to enter user identifiers directly for existing EAP
-methods, they SHOULD NOT check whether those identfiers match any EPI.  Any user who
+methods, they MUST NOT check whether those identfiers match any EPI.  Any user who
 enters an identifier which matches an EPI will either get rejected because the server
 does not support provisioning, or the user will be placed into a
 captive portal.  There is no security or privacy issues with a user
@@ -342,7 +342,7 @@ therefore MUST track which provisioning methods have been tried, and
 not repeat the same method to the same EAP server when receiving an
 EAP Nak.
 
-Peers MUST rate-limit their provisioning attempts.  If provisioning
+Peers MUST rate limit their provisioning attempts.  If provisioning
 fails, it is likely because provisioning is not available.  Retrying
 provisioning repeatedly in quick succession is not likely to change
 the server behavior.  Instead, it is likely to result in the peer
@@ -403,7 +403,7 @@ outlined in {{RFC3748}}.
 Implementations MUST treat peers using an EPI as
 untrusted, and untrustworthy.  Once such a peer is authenticated, it MUST
 be placed into a limited network, such as a captive portal.  The
-limited network MUST NOT permit general network access.
+limited network MUST NOT permit unrestricted network access.
 Implementations should be aware of methods which bypass simple
 blocking, such as tunneling data over DNS.
 
@@ -427,7 +427,7 @@ services which are available to those devices.  The provisioning
 process generally does not need to download large amounts of data, and
 similarly does not need access to a large number of services.
 
-Servers SHOULD rate-limit provisioning attempts.  A misbehaving peer
+Servers SHOULD rate limit provisioning attempts.  A misbehaving peer
 can be blocked temporarily, or even permanently. Implementations
 SHOULD limit the total number of peers being provisioned at the same
 time.  There is no requirement for RADIUS servers to allow all peers to
@@ -452,7 +452,7 @@ provisioning server(s).
 
 Implementations MUST NOT permit EAP method negotiation with
 provisioning credentials.  That is, when an EPI is used,
-any EAP Nak sent by a server MUST contain only EAP method zero (0).
+any EAP Nak sent by a server must contain only EAP method zero (0).
 When an EAP peer uses an EPI and receives an EAP Nak, any
 EAP methods given in that Nak MUST be ignored.
 
@@ -770,7 +770,7 @@ is reserved for vendor and SDO extensions.
 
 The subdomain of the NAI field should correspond to the EAP Method
 Type name.  Care should be taken so that the domain name conventions
-specified in {{RFC1034}} are followed.
+specified in {{STD13}} are followed.
 
 The NAIs in this registry are case-insensitive.  While {{RFC7542}}
 notes that similar identifiers of different case can be considered to
