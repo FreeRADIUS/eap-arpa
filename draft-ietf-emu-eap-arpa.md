@@ -62,7 +62,7 @@ informative:
        name: CA/Browser Forum
      format:
        TXT: https://cabforum.org/
-
+  IEEE802.11u:
 
 venue:
   group: EMU
@@ -111,12 +111,67 @@ predefined passwords.  Where supported by the underlying EAP method,
 this specification provides for password-less access.  Where passwords
 are required, the password is defined to be the same as the identity.
 
+## Background and Rationale
+
+In this section, we provide background on the existing functionality,
+and describe why it was necessary to define provisioning methods for
+EAP.
+
+### Review of Existing Functionality
+
+For EAP-TLS, both {{RFC5216}} Section 2.1.1 and {{RFC9190}} provide
+for "peer unauthenticated access".  However, those documents define no
+way for a peer to signal that it is requesting such access.  The
+presumption is that the peer connects with some value for the EAP
+Identity, but without using a client certificate.  The EAP server is
+then supposed to determine that the peer is requesting unauthenticated
+access, and take the appropriate steps to limit authorization.
+
+There appears to be no EAP peer or server implementations which
+support such access, since there is no defined way to perform any of
+the steps required, i.e., to signal that this access is desired, and
+then limit access.
+
+Wi-Fi Alliance has defined an unauthenticated EAP-TLS method,
+using a vendor-specific EAP method as part of HotSpot 2.0r2 {{HOTSPOT}}.
+However, there appears to be few deployments of this specification.
+
+EAP-NOOB {{RFC9140}} takes this process a step further.  It defines both
+a way to signal that provisioning is desired, and also a way to
+exchange provisioning information within EAP-NOOB.  That is, there is
+no need for the device to obtain limited network access, as all of the
+provisioning is done inside of the EAP-NOOB protocol.
+
+Tunnel Extensible Authentication Protocol (TEAP) {{RFC7170}} provides for provisioning via an unauthenticated TLS
+tunnel.  That document provides for a server unauthenticated
+provisioning mode, but the inner TLS exchange requires that both ends
+authenticate each other.  There are ways to provision a certificate,
+but the peer must still authenticate itself to the server with
+pre-existing credentials.  As a result, any provisioning method which uses TEAP will have to address this limitation.
+
+### Taxonomy of Provisioning Types
+
+There are two scenarios where provisioning can be done.  The first is
+where provisioning is done within the EAP method, as with EAP-NOOB
+{{RFC9140}}.  The second is where EAP is used to obtain limited
+network access (e.g. as with a captive portal).  That limited network
+access is then used to run IP based provisioning
+over more complex protocols.
+
+### Rationale for Provisioning over EAP
+
+It is often useful to do all provisioning inside of EAP, because the EAP / AAA
+admin does not have control over the network.  It is not always
+possible to define a captive portal where provisioning can be done.
+As a result, we need to be able to perform provisioning via EAP, and
+not via some IP protocol.
+
 # Terminology
 
-EAP Provisioning Identifier (EPI)
+EAP Provisioning Identifier
 
-> The EAP Provisioning Identifier (EPI) is defined to be a strict
-> subset of the Network Access Identifier {{RFC7542}}.  The EPI is an
+> The EAP Provisioning Identifier is defined to be a strict
+> subset of the Network Access Identifier (NAI) {{RFC7542}}.  The EPI is an
 > NAI which is a subdomain of "eap.arpa".  The "realm" portion of
 > the NAI is defined in {{RFC7542, Section 2.2}}, which is a more
 > restrictive subset of the domain name conventions specified in
@@ -218,9 +273,10 @@ See [](#vendor-assignment) for more discussion of this topic.
 This specification does not make any provisions for private-use
 realms.  The "v." sub-realm is sufficient for all private uses.
 
-For experimental uses, it is RECOMMENDED that the "ietf.org" realm is
-used.  Different uses SHOULD be distinguished by using the name of a
-working group or document, such as "emu.ietf.org.v.eap.arpa".
+Experimental provisioning methods MUST be defined within the
+appropriate vendors name space.  For drafts within the IETF, the "ietf.org" vendor space MUST be used.  Different uses SHOULD be distinguished
+by using the name of a working group or document, such as
+"emu.ietf.org.v.eap.arpa".
 
 ## The username field
 
@@ -242,7 +298,7 @@ and the username field can be publicly visible.
 ## Operation
 
 Having described the format and contents of NAIs in the eap.arpa realm
-to define the EAP Provisioning Identifier (EPI), we now describe how
+to define the EPI, we now describe how
 those EPIs are used by EAP peers and EAP peers to signal provisioning
 information
 
@@ -357,7 +413,7 @@ blocking only selected "bad" traffic results in substantial security
 failures.  As most provisioning methods permit unauthenticated devices
 to gain network access, these methods have a substantial potential for
 abuse by malicious actors.  As a result, the limited network needs to
-be designed assuming that it will be abused by malicious actoer.
+be designed assuming that it will be abused by malicious actor.
 
 A limited network SHOULD also limit the duration of network access by
 devices being provisioned.  The provisioning process should be fairly
@@ -381,7 +437,7 @@ those devices based on reasons which are not explained to those
 devices.
 
 Implementations SHOULD use functionality such as the RADIUS Filter-Id
-attribute ({{?RFC2865, Section 5.11}}) to limit network access for the
+attribute ({{RFC2865, Section 5.11}}) to limit network access for the
 peer being provisioned, as discussed above in [](#eap-servers).  For
 ease of administration, the Filter-Id name could simply be the EPI, or
 a similar name.  Such consistency aids with operational considerations
@@ -469,61 +525,6 @@ In order to avoid spurious DNS lookups, RADIUS servers supporting
 DNS.  Specifically, names in the eap.arpa. domain MUST NOT be
 looked up in DNS.
 
-# Background and Rationale
-
-In this section, we provide background on the existing functionality,
-and describe why it was necessary to define provisioning methods for
-EAP.
-
-## Review of Existing Functionality
-
-For EAP-TLS, both {{RFC5216}} Section 2.1.1 and {{RFC9190}} provide
-for "peer unauthenticated access".  However, those documents define no
-way for a peer to signal that it is requesting such access.  The
-presumption is that the peer connects with some value for the EAP
-Identity, but without using a client certificate.  The EAP server is
-then supposed to determine that the peer is requesting unauthenticated
-access, and take the appropriate steps to limit authorization.
-
-There appears to be no EAP peer or server implementations which
-support such access, since there is no defined way to perform any of
-the steps required, i.e., to signal that this access is desired, and
-then limit access.
-
-Wi-Fi Alliance has defined an unauthenticated EAP-TLS method,
-using a vendor-specific EAP method as part of HotSpot 2.0r2 {{HOTSPOT}}.
-However, there appears to be few deployments of this specification.
-
-EAP-NOOB {{RFC9140}} takes this process a step further.  It defines both
-a way to signal that provisioning is desired, and also a way to
-exchange provisioning information within EAP-NOOB.  That is, there is
-no need for the device to obtain limited network access, as all of the
-provisioning is done inside of the EAP-NOOB protocol.
-
-Tunnel Extensible Authentication Protocol (TEAP) {{RFC7170}} provides for provisioning via an unauthenticated TLS
-tunnel.  That document provides for a server unauthenticated
-provisioning mode, but the inner TLS exchange requires that both ends
-authenticate each other.  There are ways to provision a certificate,
-but the peer must still authenticate itself to the server with
-pre-existing credentials.  As a result, any provisioning method which uses TEAP will have to address this limitation.
-
-## Taxonomy of Provisioning Types
-
-There are two scenarios where provisioning can be done.  The first is
-where provisioning is done within the EAP method, as with EAP-NOOB
-{{RFC9140}}.  The second is where EAP is used to obtain limited
-network access (e.g. as with a captive portal).  That limited network
-access is then used to run IP based provisioning
-over more complex protocols.
-
-### Rationale for Provisioning over EAP
-
-It is often useful to do all provisioning inside of EAP, because the EAP / AAA
-admin does not have control over the network.  It is not always
-possible to define a captive portal where provisioning can be done.
-As a result, we need to be able to perform provisioning via EAP, and
-not via some IP protocol.
-
 # Interaction with EAP Methods
 
 As the provisioning identifier is used within EAP, it necessarily has
@@ -577,8 +578,8 @@ it is acceptable in some cases to not validate the EAP server
 certificate, but only so long as there are other means to authenticate
 the data which is being provisioned.
 
-However, since the device likely is configured with web CAs {{CAB}},
-(otherwise, the captive portal would also be unauthenticated),
+However, since the device likely is configured with web CAs {{CAB}}
+otherwise, the captive portal would also be unauthenticated,
 provisioning methods could use those CAs within an EAP method in order
 to allow the peer to authenticate the EAP server.  Further discussion
 of this topic is better suited for the specification(s) which define a
@@ -612,7 +613,7 @@ secured.
 
 Further details of the captive portal architecture can be found in
 {{RFC8952}}.  The captive portal can advertise support for the
-eap.arpa. domain via an 802.11u NAI realm.
+eap.arpa. domain via an 802.11u realm.
 
 ## EAP-NOOB
 
@@ -624,7 +625,7 @@ if that does not succeed, use "noob@eap-noob.arpa".
 
 # IANA Considerations
 
-A number IANA actions are required.  There are two registry updates in
+A number of IANA actions are required.  There are two registry updates in
 order to define the eap.arpa. domain.  A new registry is created.  The
 "noob@eap-noob.arpa" registry entry is deprecated.
 
@@ -735,7 +736,7 @@ Registry
 >
 >> Reference where this identifier was defined.
 
-#### Initial Values
+### Initial Values
 
 The following table gives the initial values for this table.
 
