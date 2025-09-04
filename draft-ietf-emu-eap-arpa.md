@@ -496,7 +496,7 @@ It is RECOMMENDED that the provisioning methods provide for a method
 which can be used without affecting network access.  A specification
 could define provisioning endpoints such as Enrollment over Secure
 Transport (EST) {{?RFC7030}}, or Internet X.509 Public Key Infrastructure
-Certificate Management Protocol (CMP) {{?RFC4210}}.  The provisioning endpoints could be
+Certificate Management Protocol (CMP) {{?RFC9810}}.  The provisioning endpoints could be
 available both on the provisioning network, and on the provisioned
 (i.e., normal) network.  Such an architecture means that devices can be
 re-provisioned without losing network access.
