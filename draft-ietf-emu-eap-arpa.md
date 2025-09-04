@@ -248,7 +248,7 @@ is defined in [](#registry). The subdomain MUST follow the syntax defined in {{R
 
 Where possible, the first subdomain of the eap.arpa. domain SHOULD use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
-(EAP) Registry, sub-registry "Method Types".  However, the EAP registry does
+(EAP) Registry group, "Method Types" registry.  However, the EAP registry does
 not follow the domain name conventions specified in {{RFC1034}}, so it
 is not always possible to make a "one-to-one" mapping between the Method Type
 name and a subdomain of the eap.arpa. domain.
