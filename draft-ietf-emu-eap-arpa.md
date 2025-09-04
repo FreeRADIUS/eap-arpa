@@ -642,7 +642,7 @@ be made within the new "EAP Provisioning Identifiers" registry.
 
 IANA is instructed to update the "eap-noob.arpa" entry as follows.
 
-The USAGE field is updated to add the word DEPRECATED.
+The USAGE field is updated to prefix the text with the word DEPRECATED.
 
 The REFERENCE field is updated to add a reference to THIS-DOCUMENT.
 
@@ -764,7 +764,7 @@ portion MUST NOT be "anonymous".  The NAI MUST be a subdomain within the eap.arp
 NAIs with any "v." subdomain MUST NOT be registered, in order to
 preserve the functionality of that subdomain.
 
-NAIs in the registry SHOULD NOT contain more than one subdomain.  NAIs
+NAIs in the registry MUST NOT contain more than one subdomain.  NAIs
 with a leading "v." subdomain MUST NOT be registered.  That subdomain
 is reserved for vendor and SDO extensions.
 
