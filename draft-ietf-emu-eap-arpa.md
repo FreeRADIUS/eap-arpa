@@ -1,7 +1,7 @@
 ---
 title: The eap.arpa. domain and EAP provisioning
 abbrev: eap.arpa
-docname: draft-ietf-emu-eap-arpa-09
+docname: draft-ietf-emu-eap-arpa-10
 updates: 5216, 9140, 9190
 
 stand_alone: true
@@ -25,6 +25,7 @@ author:
   email: alan.dekok@inkbridge.io
 
 normative:
+  RFC1034:
   RFC8174:
   RFC3748:
   RFC5216:
@@ -116,17 +117,31 @@ EAP Provisioning Identifier (EPI)
 
 > The EAP Provisioning Identifier (EPI) is defined to be a strict
 > subset of the Network Access Identifier {{RFC7542}}.  The EPI is an
-> NAI which ends with "eap.arpa".  The domain or "realm" portion of
+> NAI which is a subdomain of "eap.arpa".  The "realm" portion of
 > the NAI is defined in {{RFC7542, Section 2.2}}, which is a more
 > restrictive subset of the domain name conventions specified in
 > {{RFC1034}}.
 >
-> Readers of this document should note that the NAI is different from
-> a domain name.  The NAIs defined by this specification end with the
-> realm "eap.arpa", which does not include a trailing ".".  However,
-> this specification often refers to the domain name "eap.arpa.",
-> which includes a trailing "." for consistency with other DNS
-> terminology.
+> Readers of this document should note that the realm portion of the
+> NAI is different from a domain name.  In addition to the character
+> set being more limited, the realm portion of the NAI does not
+> include a trailing ".".
+
+eap.arpa
+
+> The realm portion of the NAI.
+>
+> This document uses the term "eap.arpa realm" when using that name
+> within the contect of an NAI.
+
+eap.arpa.
+
+> The domain name "eap.arpa.".
+>
+> This document uses the term "eap.arpa. domain " when using that name
+> within the contect of the DNS.  The trailing "." is added for
+> consistency with DNS specifications.
+
 
 {::boilerplate bcp14}
 
@@ -176,16 +191,16 @@ requested methods to be distinguished.  The subdomain in the realm
 field is assigned via the EAP Provisioning Identifier Registry {{EAPREG}}, which
 is defined in [](#registry). The subdomain MUST follow the syntax defined in {{RFC7542, Section 2.2}}, which is a more restrictive subset of the domain name conventions specified in {{RFC1034}}.
 
-The first subdomain of the eap.arpa. domain SHOULD use the EAP
+Where possible, the first subdomain of the eap.arpa. domain SHOULD use the EAP
 method name, as defined in the IANA Extensible Authentication Protocol
-(EAP) Registry, sub-registry "Method Types".  However, that registry does
+(EAP) Registry, sub-registry "Method Types".  However, the EAP registry does
 not follow the domain name conventions specified in {{RFC1034}}, so it
-is not possible to make a "one-to-one" mapping between the Method Type
-name and the subdomain.
+is not always possible to make a "one-to-one" mapping between the Method Type
+name and a subdomain of the eap.arpa. domain.
 
 Where it is not possible to make a direct mapping between the EAP
-Method Type name due to the EAP Method Type name not matching the {{RFC7542, Section 2.2}} format, the name used in the realm registry MUST be
-similar enough to allow the average reader to understand which EAP
+Method Type name due to the EAP Method Type name not matching the {{RFC7542, Section 2.2}} format, the NAI which is defined in the EAP Provisioning Identifiers registry MUST use a realm name
+which is similar enough to allow the average reader to understand which EAP
 Method Type is being used.
 
 Additional subdomains are permitted in the realm, which permit vendors and
@@ -231,7 +246,7 @@ to define the EAP Provisioning Identifier (EPI), we now describe how
 those EPIs are used by EAP peers and EAP peers to signal provisioning
 information
 
-### EAP Peer
+### EAP Peers
 
 An EAP peer signals that it wishes a certain kind of
 provisioning by using an EPI, along with an associated EAP
@@ -269,9 +284,15 @@ There are a number of ways in which provisioning can fail.  One way is
 when the server does not implement the provisioning method.  EAP peers
 therefore MUST track which provisioning methods have been tried, and
 not repeat the same method to the same EAP server when receiving an
-EAP Nak.  EAP peers MUST rate limit attempts at provisioning, in order
-to avoid overloading the server.  This rate limiting SHOULD include
-jitter and exponential backoff.
+EAP Nak.
+
+Peers MUST rate-limit their provisioning attempts.  If provisioning
+fails, it is likely because provisioning is not available.  Retrying
+provisioning repeatedly in quick succession is not likely to change
+the server behavior.  Instead, it is likely to result in the peer
+being blocked.  The peer SHOULD retry provisioning no more than once
+every few minutes, and SHOULD include jitter and exponential backoff
+on its provisioning attempts.
 
 Since there is no way to signal whether the failed provisioning is due
 to a transient failure on the EAP server, or whether it is due to the
@@ -359,14 +380,6 @@ discretion of the network being accessed, which may permit or deny
 those devices based on reasons which are not explained to those
 devices.
 
-Peers MUST rate-limit their provisioning attempts.  If provisioning
-fails, it is likely because provisioning is not available.  Retrying
-provisioning repeatedly in quick succession is not likely to change
-the server behavior.  Instead, it is likely to result in the peer
-being blocked.  The peer SHOULD retry provisioning no more than once
-every few minutes, and SHOULD perform exponential back-off on its
-provisioning attempts.
-
 Implementations SHOULD use functionality such as the RADIUS Filter-Id
 attribute ({{?RFC2865, Section 5.11}}) to limit network access for the
 peer being provisioned, as discussed above in [](#eap-servers).  For
@@ -434,9 +447,19 @@ re-provisioned without losing network access.
 
 ## Notes on AAA Routability
 
+{{RFC7542, Section 3}} describes how the NAI allows authentication
+requests to be routable within an AAA proxy system.  While the EPI uses the
+NAI format, the eap.arpa realm has been chosen because it is not
+routable within an AAA proxy system.
+
 When we say that the eap.arpa realm is not routable in an AAA proxy
-framework, we mean that the eap.arpa. domain does not exist, and that it will never
-be resolvable for {{?RFC7585}} dynamic discovery.
+system, we mean two different things.  First, the eap.arpa. domain
+does not exist within the DNS, so it will never be resolvable for
+{{?RFC7585}} dynamic discovery.  Second, that the eap.arpa realm will
+never be used by any administrator, as the administrator is unable to
+satisfy the requirements of {{RFC7542, Section 2.5}} by registering
+the realm within the DNS.
+
 In addition, administrators will not have statically configured AAA
 proxy routes for this domain.  Where routes are added for this domain,
 they will generally be used to implement this specification.
@@ -544,17 +567,17 @@ with HTTPS, the EAP peer MAY skip validating the EAP server
 certificate.
 
 Whether or not the server certificate is ignored, the peer MUST treat
-the local network as untrusted.  {{RFC8952, Section 6.2}} has more
+the local network as untrusted.  {{RFC8952, Section 6}} has more
 discussion on this topic.
 
 The ability to not validate the EAP server certificates relaxes the
 requirements of {{RFC5216, Section 5.3}} which requires that the
-server certificate is always validated. .  For the provisioning case,
+server certificate is always validated.  For the provisioning case,
 it is acceptable in some cases to not validate the EAP server
 certificate, but only so long as there are other means to authenticate
 the data which is being provisioned.
 
-However, since the device likely is configured with CAs for the web issued by {{CAB}},
+However, since the device likely is configured with web CAs {{CAB}},
 (otherwise, the captive portal would also be unauthenticated),
 provisioning methods could use those CAs within an EAP method in order
 to allow the peer to authenticate the EAP server.  Further discussion
@@ -611,7 +634,7 @@ There are two updates to the ".arpa" registry.
 
 IANA is also instructed to refuse further allocation requests which
 are directly within the ".arpa" registry for any functionality related
-to the EAP protocol.  Instead, new allocations related to EAP are to
+to the EAP protocol.  Instead, allocations related to EAP are to
 be made within the new "EAP Provisioning Identifiers" registry.
 
 ### Deprecating eap-noob.arpa
@@ -643,7 +666,7 @@ IANA is instructed to update the "Special-Use Domain Names" registry as follows:
 
 NAME
 
-> eap.arpa
+> eap.arpa.
 
 REFERENCE
 
@@ -672,8 +695,7 @@ Writers of authoritative DNS servers are not expected to recognize these names o
 
 6.  DNS Server Operators:
 These domain names have minimal impact on DNS server operators.  They should never be used in DNS, or in any networking protocol outside of EAP.\\
-Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the eap.arpa. domain, DNS servers SHOULD return an NXDOMAIN error.
-
+Some DNS servers may receive lookups for this domain, if EAP or RADIUS servers are configured to do dynamic discovery for realms as defined in {{?RFC7585}}, and where those servers are not updated to ignore the ".arpa" domain.  When queried for the eap.arpa. domain, DNS servers SHOULD return an NXDOMAIN error.\\
 If they try to configure their authoritative DNS as authoritative for this reserved name, compliant name servers do not need to do anything special.  They can accept the domain or reject it.  Either behavior will have no impact on this specification.
 
 7. DNS Registries/Registrars:
@@ -703,7 +725,7 @@ Registry
 
 > NAI
 >
->> The Network Access Identifier in {{RFC7542}} format.  Names are stored as DNS A-Labels {{?RFC5890, Section 2.3.2.1}}, and are compared via the domain name comparison rules defined in {{!STD13}}.
+>> The Network Access Identifier in {{RFC7542}} format.
 >
 > Method Type
 >
@@ -730,14 +752,14 @@ allocation requests for this registry.
 
 ### NAIs
 
-The intent is for the NAI to contain both a reference to the EAP
-Method Type, and a description of the purpose of the NAI.  For
+The intent is for the NAI to describe both the EAP
+Method Type, and the purpose of the provisining method.  A descriptive format allows administrators who are unfamiliar with a particular NAI to make reasonable deductions about the provisioning method being requested.  For
 example, with an EAP Method Type "name", and a purpose "action", the
-NAI SHOULD be of the form "action@foo.eap.arpa".
+NAI SHOULD be of the form "action@name.eap.arpa".
 
 The NAI MUST satisfy the requirements of the {{RFC7542, Section 2.2}}
 format.  The utf8-username portion MAY be empty.  The utf8-username
-portion MUST NOT be "anonymous".  The NAI MUST end with the eap.arpa realm.
+portion MUST NOT be "anonymous".  The NAI MUST be a subdomain within the eap.arpa realm.
 NAIs with any "v." subdomain MUST NOT be registered, in order to
 preserve the functionality of that subdomain.
 
